@@ -1,0 +1,72 @@
+# Enconvert silent-failure benchmark — 50 fixed public URLs.
+# Format: URL<whitespace>category   (# = inline comment / vendor note)
+# Categories: bot-gated | paywalled | js-heavy
+#
+# All URLs are public (no login required) and were selected as a
+# representative "hostile" set: sites behind bot-management (Cloudflare,
+# Akamai, DataDome, PerimeterX/HUMAN), paywalls, or client-side rendering.
+# Vendor attribution reflects public scraping-vendor writeups; actual
+# per-run behavior varies with IP reputation and geo (that is the point —
+# run it yourself and see).
+
+# ---------------------------------------------------------------------------
+# BOT-GATED (18) — Cloudflare / Akamai / DataDome / PerimeterX-HUMAN / Imperva
+# ---------------------------------------------------------------------------
+https://www.g2.com/               bot-gated   # Cloudflare challenge
+https://www.indeed.com/           bot-gated   # Cloudflare
+https://www.glassdoor.com/        bot-gated   # Cloudflare
+https://www.yelp.com/             bot-gated   # DataDome (Server: DataDome)
+https://www.tripadvisor.com/      bot-gated   # DataDome
+https://www.etsy.com/             bot-gated   # DataDome
+https://seatgeek.com/             bot-gated   # DataDome
+https://www.leboncoin.fr/         bot-gated   # DataDome (named customer)
+https://www.coinbase.com/         bot-gated   # Cloudflare (crypto exchange)
+https://kick.com/                 bot-gated   # Cloudflare (streaming)
+https://www.zillow.com/           bot-gated   # PerimeterX / HUMAN
+https://stockx.com/               bot-gated   # PerimeterX / HUMAN
+https://www.nike.com/             bot-gated   # Akamai ("Access Denied")
+https://www.ticketmaster.com/     bot-gated   # Cloudflare interstitial
+https://www.crunchbase.com/       bot-gated   # Cloudflare / PerimeterX
+https://www.walmart.com/          bot-gated   # PerimeterX / HUMAN
+https://www.similarweb.com/       bot-gated   # Cloudflare
+https://www.booking.com/          bot-gated   # Akamai / custom challenge
+
+# ---------------------------------------------------------------------------
+# PAYWALLED (15) — hard paywalls gate a naive fetch; metered often do not
+# ---------------------------------------------------------------------------
+https://www.wsj.com/              paywalled   # HARD (Dow Jones, 401 gate)
+https://www.barrons.com/          paywalled   # HARD (Dow Jones)
+https://www.ft.com/               paywalled   # HARD + Cloudflare
+https://www.economist.com/        paywalled   # HARD + Cloudflare
+https://www.bloomberg.com/        paywalled   # metered-aggressive + PerimeterX
+https://www.theinformation.com/   paywalled   # HARD (subscriber-only)
+https://www.washingtonpost.com/   paywalled   # metered + bot edge
+https://www.thetimes.com/         paywalled   # HARD / registration wall (UK)
+https://seekingalpha.com/         paywalled   # register + metered + PerimeterX
+https://hbr.org/                  paywalled   # metered -> hard
+https://www.newyorker.com/        paywalled   # metered (Conde Nast)
+https://www.wired.com/            paywalled   # metered (Conde Nast)
+https://www.theatlantic.com/      paywalled   # metered -> hard
+https://www.businessinsider.com/  paywalled   # freemium / metered
+https://www.nytimes.com/          paywalled   # metered / dynamic
+
+# ---------------------------------------------------------------------------
+# JS-HEAVY SPA (17) — near-empty HTML shell to a naive fetch; JS builds the DOM
+# ---------------------------------------------------------------------------
+https://web.telegram.org/         js-heavy    # ~1.5KB shell
+https://www.messenger.com/        js-heavy    # ~1.1KB shell
+https://app.diagrams.net/         js-heavy    # draw.io, ~2.7KB shell
+https://app.element.io/           js-heavy    # Matrix client, ~4.7KB shell
+https://app.aave.com/             js-heavy    # DeFi dashboard, empty #root
+https://open.spotify.com/         js-heavy    # web player shell
+https://excalidraw.com/           js-heavy    # whiteboard, empty #root
+https://pancakeswap.finance/      js-heavy    # DeFi app shell
+https://app.uniswap.org/          js-heavy    # swap app, empty #root
+https://www.photopea.com/         js-heavy    # image editor (canvas) shell
+https://jup.ag/                   js-heavy    # Solana swap, needs-JS
+https://x.com/                    js-heavy    # social feed, JS shell + edge
+https://dexscreener.com/          js-heavy    # crypto dashboard (React) + CF
+https://defillama.com/            js-heavy    # DeFi dashboard (Next.js) + CF
+https://tldraw.com/               js-heavy    # whiteboard SPA shell
+https://coinmarketcap.com/        js-heavy    # JS-heavy + Cloudflare
+https://www.coingecko.com/        js-heavy    # JS-heavy dashboard

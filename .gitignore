@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+test_urls.txt
+run_public.log
+parity_gateway.json

@@ -1,0 +1,1130 @@
+{
+  "meta": {
+    "harness": "perceive_benchmark.py",
+    "quality_floor": 0.4,
+    "render_user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "elapsed_seconds": 618.5,
+    "generated_utc": "2026-07-07T17:50:28Z"
+  },
+  "summary": {
+    "n": 50,
+    "naive_silent_fail_count": 26,
+    "naive_silent_fail_pct": 52.0,
+    "naive_hard_error_count": 1,
+    "enconvert_clean_count": 39,
+    "enconvert_clean_pct": 78.0,
+    "enconvert_flagged_count": 10,
+    "enconvert_flagged_pct": 20.0,
+    "enconvert_render_error_count": 1,
+    "enconvert_silent_fail_count": 0,
+    "recovery": {
+      "naive_silent_fail_n": 26,
+      "enconvert_rendered_clean": 17,
+      "recovery_pct": 65.4
+    }
+  },
+  "results": [
+    {
+      "url": "https://www.g2.com/",
+      "category": "bot-gated   # Cloudflare challenge",
+      "naive_status": 403,
+      "naive_final_url": "https://www.g2.com/",
+      "naive_word_count": 9,
+      "naive_bytes": 1685,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_403"
+      ],
+      "naive_excerpt": "g2.com Please enable JS and disable any ad blocker",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "g2.com"
+    },
+    {
+      "url": "https://www.indeed.com/",
+      "category": "bot-gated   # Cloudflare",
+      "naive_status": 403,
+      "naive_final_url": "https://www.indeed.com/",
+      "naive_word_count": 4,
+      "naive_bytes": 27859,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "bot_challenge",
+        "http_403"
+      ],
+      "naive_excerpt": "Security Check - Indeed.com",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 500,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Job Search India | Indeed Skip to main content Home Company reviews Salary guide Sign in \ud83c\uddee\ud83c\uddf3 En 1 new update Home Company reviews Salary guide Employers Create your CV Change country \ud83c\uddee\ud83c\uddf3 India Help Privacy Centre Employers / Post Job Start of main content Keyword : all jobs &nbsp; Edit location input "
+    },
+    {
+      "url": "https://www.glassdoor.com/",
+      "category": "bot-gated   # Cloudflare",
+      "naive_status": 403,
+      "naive_final_url": "https://www.glassdoor.com/",
+      "naive_word_count": 577,
+      "naive_bytes": 241084,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "http_403"
+      ],
+      "naive_excerpt": "Security | Glassdoor Humans only Glassdoor has been built on the contributions of real employees and job seekers. We use advanced security systems to keep our site safe and prevent misuse or unauthorized access. In rare cases, security protections may mistakenly block legitimate activity from real u",
+      "enconvert_quality": 0.7,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 931,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "domain_redirect": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Glassdoor | Job Search and Career Community Skip to content Skip to footer Community Your work people are here Connect anonymously with professionals about work, pay, life and more. Start using Glassdoor Jobs Find the right job Millions of jobs. Search by what matters to you and find the one that's "
+    },
+    {
+      "url": "https://www.yelp.com/",
+      "category": "bot-gated   # DataDome (Server: DataDome)",
+      "naive_status": 403,
+      "naive_final_url": "https://www.yelp.com/",
+      "naive_word_count": 9,
+      "naive_bytes": 776,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_403"
+      ],
+      "naive_excerpt": "yelp.com Please enable JS and disable any ad blocker",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "yelp.com"
+    },
+    {
+      "url": "https://www.tripadvisor.com/",
+      "category": "bot-gated   # DataDome",
+      "naive_status": 403,
+      "naive_final_url": "https://www.tripadvisor.com/",
+      "naive_word_count": 9,
+      "naive_bytes": 775,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_403"
+      ],
+      "naive_excerpt": "tripadvisor.com Please enable JS and disable any ad blocker",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "tripadvisor.com"
+    },
+    {
+      "url": "https://www.etsy.com/",
+      "category": "bot-gated   # DataDome",
+      "naive_status": 403,
+      "naive_final_url": "https://www.etsy.com/",
+      "naive_word_count": 9,
+      "naive_bytes": 776,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_403"
+      ],
+      "naive_excerpt": "etsy.com Please enable JS and disable any ad blocker",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "etsy.com"
+    },
+    {
+      "url": "https://seatgeek.com/",
+      "category": "bot-gated   # DataDome",
+      "naive_status": 403,
+      "naive_final_url": "https://seatgeek.com/",
+      "naive_word_count": 9,
+      "naive_bytes": 780,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_403"
+      ],
+      "naive_excerpt": "seatgeek.com Please enable JS and disable any ad blocker",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "seatgeek.com"
+    },
+    {
+      "url": "https://www.leboncoin.fr/",
+      "category": "bot-gated   # DataDome (named customer)",
+      "naive_status": 200,
+      "naive_final_url": "https://www.leboncoin.fr/",
+      "naive_word_count": 1043,
+      "naive_bytes": 393411,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "leboncoin, site de petites annonces gratuites aller au contenu aller au pied de page Renforcer les contrastes D\u00e9poser une annonce Mes recherches Favoris Messages . . . Immobilier V\u00e9hicules Mat\u00e9riel pro Emploi Mode Maison & Jardin Famille \u00c9lectronique Loisirs Autres Bons plans ! Valider votre recherc",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "leboncoin.fr"
+    },
+    {
+      "url": "https://www.coinbase.com/",
+      "category": "bot-gated   # Cloudflare (crypto exchange)",
+      "naive_status": 200,
+      "naive_final_url": "https://www.coinbase.com/en-in",
+      "naive_word_count": 926,
+      "naive_bytes": 328000,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Coinbase - Buy & Sell Bitcoin, Ethereum, and more with trust Skip to content Skip to site index Cryptocurrencies Individuals Trade \udb82\ude02 Crypto Buy and sell cryptocurrencies \udb82\uddf6 Derivatives New Amplify your trades with futures and perpetual-style futures \udb80\udc24 Advanced Professional-grade trading tools \udb81\udd52 Learn",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1848,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Coinbase - Buy & Sell Bitcoin, Ethereum, and more with trust \udb81\udf4a \udb81\udcb0 Sign in Sign up \udb81\udcc2 Crypto Derivatives Advanced Learn Staking USDC rewards Base App Business Asset Listings Token Manager Trading and Financing Custody Staking Onchain Wallet Exchange International Exchange Derivatives Exchange Verified "
+    },
+    {
+      "url": "https://kick.com/",
+      "category": "bot-gated   # Cloudflare (streaming)",
+      "naive_status": 200,
+      "naive_final_url": "https://kick.com/",
+      "naive_word_count": 149,
+      "naive_bytes": 664734,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Kick Log In Sign Up Home Browse Following Recommended Top Live Categories View all Just Chatting View all Show more Games Show more Popular Clips This Week View all Show more IRL View all Show more Grand Theft Auto V View all Show more Call of Duty View all Show more Art & Music Show more Fortnite V",
+      "enconvert_quality": 0.75,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 390,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "resource_failures": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Kick Log In Sign Up Top Live Categories View all Popular Clips This Week View all Show more IRL View all Show more Grand Theft Auto V View all Show more Call of Duty View all Show more Art & Music Show more Fortnite View all Show more Old School RuneScape View all Show more League of Legends View al"
+    },
+    {
+      "url": "https://www.zillow.com/",
+      "category": "bot-gated   # PerimeterX / HUMAN",
+      "naive_status": 403,
+      "naive_final_url": "https://www.zillow.com/",
+      "naive_word_count": 7,
+      "naive_bytes": 5776,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_403"
+      ],
+      "naive_excerpt": "Access to this page has been denied",
+      "enconvert_quality": 0.35,
+      "enconvert_is_blocked": true,
+      "enconvert_word_count": 82,
+      "enconvert_deductions": {
+        "bot_detection": 0.5,
+        "empty_body": 0.15
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "ERROR: The request could not be satisfied 403 ERROR The request could not be satisfied. Request blocked. We can't connect to the server for this app or website at this time. There might be too much traffic or a configuration error. Try again later, or contact the app or website owner. If you provide"
+    },
+    {
+      "url": "https://stockx.com/",
+      "category": "bot-gated   # PerimeterX / HUMAN",
+      "naive_status": 403,
+      "naive_final_url": "https://stockx.com/",
+      "naive_word_count": 44,
+      "naive_bytes": 968988,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "http_403"
+      ],
+      "naive_excerpt": "Error StockX Logo Please login to continue. Please log in to verify you are not a bot. If you are looking to access data through our API, please visit our developer portal . If you need more help, visit our Help Center . Login",
+      "enconvert_quality": 0.6,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 259,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "resource_failures": 0.15,
+        "slow_render": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "StockX: Sneakers, Streetwear, Trading Cards, Handbags, Watches Skip to Main Content StockX StockX Logo News About Opens in new tab Help Sell Login Sign Up All Trending New Deals Men Women Kids Sneakers Shoes Apparel Accessories Collectibles Trading Cards More Opens in new tab Opens in new tab Recomm"
+    },
+    {
+      "url": "https://www.nike.com/",
+      "category": "bot-gated   # Akamai (\"Access Denied\")",
+      "naive_status": 403,
+      "naive_final_url": "https://www.nike.in/",
+      "naive_word_count": 17,
+      "naive_bytes": 365,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "bot_challenge",
+        "http_403"
+      ],
+      "naive_excerpt": "Access Denied Access Denied You don't have permission to access \"http://www.nike.in/\" on this server. Reference #18.b48c2c31.1783446084.11c7573b https://errors.edgesuite.net/18.b48c2c31.1783446084.11c7573b",
+      "enconvert_quality": 0.9,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 625,
+      "enconvert_deductions": {
+        "domain_redirect": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Nike. Just Do It. Nike IN Skip To Main Content Enjoy 10% Off On The Nike App. Use: APP10 Download Now T&Cs Nike Official Online Store India Video Player is loading. Play Video Pause Unmute Current Time 0:11 / Duration 0:45 Loaded : 100.00% 0:11 Stream Type LIVE Seek to live, currently behind live LI"
+    },
+    {
+      "url": "https://www.ticketmaster.com/",
+      "category": "bot-gated   # Cloudflare interstitial",
+      "naive_status": 200,
+      "naive_final_url": "https://www.ticketmaster.com/",
+      "naive_word_count": 771,
+      "naive_bytes": 534674,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Ticketmaster: Buy Verified Tickets for Concerts, Sports, Theater and Events Your browser is not supported. For the best experience, use any of these supported browsers: Chrome , Firefox , Safari , Edge . Skip to main content US United States selected, change country Hotels Sell Gift Cards Help VIP T",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2409,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Ticketmaster: Buy Verified Tickets for Concerts, Sports, Theater and Events Your browser is not supported. For the best experience, use any of these supported browsers: Chrome , Firefox , Safari , Edge . Skip to main content US United States selected, change country Hotels Sell Gift Cards Help VIP T"
+    },
+    {
+      "url": "https://www.crunchbase.com/",
+      "category": "bot-gated   # Cloudflare / PerimeterX",
+      "naive_status": 200,
+      "naive_final_url": "https://www.crunchbase.com/",
+      "naive_word_count": 3242,
+      "naive_bytes": 814833,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Crunchbase Resources Advanced Search Start Free Trial Talk With Sales Pricing Log In Log In Make better decisions, faster Discover and act on private market activity with predictive company intelligence Search Crunchbase or Send Message Chart the funding journey of xAI Build a list of AI startups fo",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 3242,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Crunchbase Resources Advanced Search Start Free Trial Talk With Sales Pricing Log In Log In Make better decisions, faster Discover and act on private market activity with predictive company intelligence Search Crunchbase or Send Message Chart the funding journey of xAI Build a list of AI startups fo"
+    },
+    {
+      "url": "https://www.walmart.com/",
+      "category": "bot-gated   # PerimeterX / HUMAN",
+      "naive_status": 200,
+      "naive_final_url": "https://www.walmart.com/",
+      "naive_word_count": 161,
+      "naive_bytes": 258415,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Walmart | Save Money. Live better. Skip to Main Content Cancel Reorder My Items Reorder Lists Registries Sign In Account Sign in or create account Purchase History Walmart+ Subscriptions Language | English $0.00 Pickup or delivery? Walmart | Save Money. Live better. New from Better Homes & Gardens S",
+      "enconvert_quality": 0.8,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 277,
+      "enconvert_deductions": {
+        "js_errors": 0.1,
+        "slow_render": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Walmart | Save Money. Live better. Skip to Main Content Spanish / Espa\u00f1ol now available! Spanish / Espa\u00f1ol now available! Pickup or delivery? Pickup or delivery? 95829 Sacramento, 95829 95829 \u2022 Sacramento Supercenter Shipping Pickup Delivery Add an address for shipping and delivery Sacramento, CA 95"
+    },
+    {
+      "url": "https://www.similarweb.com/",
+      "category": "bot-gated   # Cloudflare",
+      "naive_status": 200,
+      "naive_final_url": "https://www.similarweb.com/",
+      "naive_word_count": 1878,
+      "naive_bytes": 925991,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Similarweb: AI-Powered Digital Data Intelligence Solutions Products Solutions Resources Enterprise Pricing Explore API Login Get a demo Get started Login Website Traffic Checker Free App Analytics Free Keyword Tool UTM Builder SERP Seismograph AI Traffic Checker Company Profile Checker Technology Ch",
+      "enconvert_quality": 0.9,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 6294,
+      "enconvert_deductions": {
+        "resource_failures": 0.05,
+        "slow_render": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Similarweb: AI-Powered Digital Data Intelligence Solutions Consent Details [#IABV2SETTINGS#] About This website uses cookies By clicking \u201cAccept All Cookies\u201d, you agree to the storing of cookies on your device to enhance site navigation, analyze site usage, and assist in our marketing efforts. Pleas"
+    },
+    {
+      "url": "https://www.booking.com/",
+      "category": "bot-gated   # Akamai / custom challenge",
+      "naive_status": 202,
+      "naive_final_url": "https://www.booking.com/",
+      "naive_word_count": 0,
+      "naive_bytes": 3962,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 871,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Booking.com | Official site | The best hotels, flights, car rentals & accommodations Skip to main content INR List your property Register Sign in Stays Flights Car rental Attractions Airport taxis Find your next stay Search deals on hotels, homes, and much more... Check-in date \u2014 Check-out date 2 ad"
+    },
+    {
+      "url": "https://www.wsj.com/",
+      "category": "paywalled   # HARD (Dow Jones, 401 gate)",
+      "naive_status": 401,
+      "naive_final_url": "https://www.wsj.com/",
+      "naive_word_count": 9,
+      "naive_bytes": 767,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_401"
+      ],
+      "naive_excerpt": "wsj.com Please enable JS and disable any ad blocker",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "wsj.com"
+    },
+    {
+      "url": "https://www.barrons.com/",
+      "category": "paywalled   # HARD (Dow Jones)",
+      "naive_status": 401,
+      "naive_final_url": "https://www.barrons.com/",
+      "naive_word_count": 9,
+      "naive_bytes": 771,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "http_401"
+      ],
+      "naive_excerpt": "barrons.com Please enable JS and disable any ad blocker",
+      "enconvert_quality": 0.3,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1,
+      "enconvert_deductions": {
+        "empty_body": 0.7
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "barrons.com"
+    },
+    {
+      "url": "https://www.ft.com/",
+      "category": "paywalled   # HARD + Cloudflare",
+      "naive_status": 403,
+      "naive_final_url": "https://www.ft.com/",
+      "naive_word_count": 88,
+      "naive_bytes": 270283,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "http_403"
+      ],
+      "naive_excerpt": "Security Verification Financial Times Security Verification For help please visit help.ft.com . We apologise for any inconvenience. The following information can help our support team to resolve this issue. Reason Challenge Request ID a178a6668d5bcdbc Status Code 403 Terms & Conditions Privacy Polic",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2708,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Home - Financial Times Accessibility help Skip to navigation Skip to main content Skip to footer S&P 500 Minus \u2212 0.27% Shanghai Minus \u2212 1.26% FTSE 100 + 0.13% Euro/Dollar Minus \u2212 0.17% Brent Crude Oil + 3.17% 10 Year US Gov Minus \u2212 0.16% Visit Markets Data More context. More depth. More why Our jour"
+    },
+    {
+      "url": "https://www.economist.com/",
+      "category": "paywalled   # HARD + Cloudflare",
+      "naive_status": 403,
+      "naive_final_url": "https://www.economist.com/",
+      "naive_word_count": 3,
+      "naive_bytes": 5856,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "bot_challenge",
+        "http_403"
+      ],
+      "naive_excerpt": "Just a moment...",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1356,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "The Economist | Go beyond breaking news Subscribe The Economist Pro Log in Menu Skip to content Subscribe The Economist Pro Log in Menu The world in brief Catch up on global daily news 1843 Compelling long reads Podcasts Tune into captivating conversations Video Watch engaging short films Insider Be"
+    },
+    {
+      "url": "https://www.bloomberg.com/",
+      "category": "paywalled   # metered-aggressive + PerimeterX",
+      "naive_status": 200,
+      "naive_final_url": "https://www.bloomberg.com/asia",
+      "naive_word_count": 2708,
+      "naive_bytes": 7985257,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Bloomberg Asia Skip to content Bloomberg the Company & Its Products The Company & its Products Bloomberg Terminal Demo Request Bloomberg Anywhere Remote Login Bloomberg Anywhere Login Bloomberg Customer Support Customer Support Bloomberg Connecting decision makers to a dynamic network of information",
+      "enconvert_quality": 0.5,
+      "enconvert_is_blocked": true,
+      "enconvert_word_count": 108,
+      "enconvert_deductions": {
+        "bot_detection": 0.5
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": true,
+      "enconvert_excerpt": "Bloomberg - Are you a robot? Bloomberg Need help? Contact us We've detected unusual activity from your computer network To continue, please click the box below to let us know you're not a robot. Why did this happen? Please make sure your browser supports JavaScript and cookies and that you are not b"
+    },
+    {
+      "url": "https://www.theinformation.com/",
+      "category": "paywalled   # HARD (subscriber-only)",
+      "naive_status": 403,
+      "naive_final_url": "https://www.theinformation.com/",
+      "naive_word_count": 3,
+      "naive_bytes": 5861,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "bot_challenge",
+        "http_403"
+      ],
+      "naive_excerpt": "Just a moment...",
+      "enconvert_quality": 0.75,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2216,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "resource_failures": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "The Information How Small Firms Use Claude to Quit Salesforce Save 25% to unlock this story The Information Sign in Subscribe Subscribe to The Information Annual $299 $399 / first year Unlimited access to our journalism, newsletters, charts and data library, and event discounts. Save 25% Pro: Save 2"
+    },
+    {
+      "url": "https://www.washingtonpost.com/",
+      "category": "paywalled   # metered + bot edge",
+      "naive_status": null,
+      "naive_final_url": null,
+      "naive_word_count": null,
+      "naive_bytes": null,
+      "naive_error": "ReadTimeout: ",
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "",
+      "enconvert_quality": 0.7,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2446,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "resource_failures": 0.05,
+        "slow_render": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "The Washington Post - Breaking news and latest headlines, U.S. news, world news, and video Accessibility statement Skip to main content News Alerts Democracy Dies in Darkness Subscribe Sign in Logo of The Washington Post Democracy Dies in Darkness Politics Opinions Style Investigations Climate Well+"
+    },
+    {
+      "url": "https://www.thetimes.com/",
+      "category": "paywalled   # HARD / registration wall (UK)",
+      "naive_status": 200,
+      "naive_final_url": "https://www.thetimes.com/",
+      "naive_word_count": 14,
+      "naive_bytes": 1331,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "Verifying Device Verifying your device, please wait Verification failed. Please try again. Try Again",
+      "enconvert_quality": null,
+      "enconvert_is_blocked": null,
+      "enconvert_word_count": null,
+      "enconvert_deductions": {},
+      "enconvert_error": "no_html: Unexpected error in _crawl_web at line 778 in _crawl_web (../ConvertHub/dev/api/gateway/.venv/lib/python3.13/site-packages/crawl4ai/async_crawler_strategy.py):\nError: Failed on navigating ACS-GOTO:\nPage.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.thetimes.com/\", waiting until \"load\"\n\n\nCode context:\n 773                                   tag=\"GOTO\",\n 774                                   params={\"url\": url},\n 775                               )\n 776                               response = None\n 777                           else:\n 778 \u2192                             raise RuntimeError(f\"Failed on navigating ACS-GOTO:\\n{str(e)}\")\n 779   \n 780                       # \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n 781                       # Walk the redirect chain.  Playwright returns only the last\n 782                       # hop, so we trace the `request.redirected_from` links until the\n 783                       # first response that differs from the final one and surface its",
+      "enconvert_flagged": false,
+      "enconvert_excerpt": ""
+    },
+    {
+      "url": "https://seekingalpha.com/",
+      "category": "paywalled   # register + metered + PerimeterX",
+      "naive_status": 200,
+      "naive_final_url": "https://seekingalpha.com/",
+      "naive_word_count": 1987,
+      "naive_bytes": 1122737,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Seeking Alpha | Stock Market Analysis & Tools for Investors Skip to content Home page Seeking Alpha - Power to Investors Create Free Account About Premium Explore Alpha Picks Explore QG&I NEW NEW Summary report FREE Newsletters Home Stock Analysis Stock Ideas Market Outlook Investing Strategy Long I",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2521,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Seeking Alpha | Stock Market Analysis & Tools for Investors Skip to content Home page Seeking Alpha - Power to Investors Create Free Account About Premium Explore Alpha Picks Explore QG&I NEW NEW Summary report FREE Newsletters Home Stock Analysis Stock Analysis Stock Ideas Market Outlook Investing "
+    },
+    {
+      "url": "https://hbr.org/",
+      "category": "paywalled   # metered -> hard",
+      "naive_status": 200,
+      "naive_final_url": "https://hbr.org/",
+      "naive_word_count": 1096,
+      "naive_bytes": 380107,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Harvard Business Review - Ideas and Advice for Leaders Skip to content Harvard Business Review Logo Harvard Business Review Logo Subscribe Sign In Latest Magazine Topics Podcasts Store Reading Lists Data & Visuals Case Selections HBR Executive Search hbr.org Subscribe Latest Podcasts The Magazine St",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1173,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Harvard Business Review - Ideas and Advice for Leaders Skip to content Harvard Business Review Logo Harvard Business Review Logo Subscribe Sign In Latest Magazine Topics Podcasts Store Reading Lists Data & Visuals Case Selections HBR Executive Search hbr.org Subscribe Latest Podcasts The Magazine St"
+    },
+    {
+      "url": "https://www.newyorker.com/",
+      "category": "paywalled   # metered (Conde Nast)",
+      "naive_status": 200,
+      "naive_final_url": "https://www.newyorker.com/",
+      "naive_word_count": 2106,
+      "naive_bytes": 1989773,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "The New Yorker Skip to main content The New Yorker Newsletter Search Search Open Navigation Menu Menu The Latest News Books & Culture Fiction & Poetry Humor & Cartoons Magazine Puzzles & Games Video Podcasts Goings On Shop Die Another Day A new book argues that many of the world\u2019s oldest people aren",
+      "enconvert_quality": 0.55,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2608,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "resource_failures": 0.15,
+        "slow_render": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "The New Yorker Privacy Center Currently, only residents from GDPR countries and certain US states can opt out of Tracking Technologies through our Consent Management Platform. Additional options regarding these technologies may be available on your device, browser, or through industry options like A"
+    },
+    {
+      "url": "https://www.wired.com/",
+      "category": "paywalled   # metered (Conde Nast)",
+      "naive_status": 200,
+      "naive_final_url": "https://www.wired.com/",
+      "naive_word_count": 1900,
+      "naive_bytes": 1701193,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "WIRED - The Latest in Technology, Science, Culture and Business | WIRED Skip to main content Menu WIRED SECURITY POLITICS THE BIG STORY BUSINESS SCIENCE CULTURE REVIEWS Menu WIRED Account Account Newsletters Security Politics The Big Story Business Science Culture Reviews Chevron More Expand The Big",
+      "enconvert_quality": 0.85,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2482,
+      "enconvert_deductions": {
+        "js_errors": 0.1,
+        "slow_render": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "WIRED - The Latest in Technology, Science, Culture and Business | WIRED Privacy Center Currently, only residents from GDPR countries and certain US states can opt out of Tracking Technologies through our Consent Management Platform. Additional options regarding these technologies may be available on"
+    },
+    {
+      "url": "https://www.theatlantic.com/",
+      "category": "paywalled   # metered -> hard",
+      "naive_status": 200,
+      "naive_final_url": "https://www.theatlantic.com/world/",
+      "naive_word_count": 1398,
+      "naive_bytes": 378444,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "World Edition - The Atlantic Skip to content Site Navigation The Atlantic Popular Latest Newsletters Sections Ideas Politics Economy Global National Security Washington Week Features Technology AI Watchdog Science Planet Health Philosophy Education Culture Comedy Family Books Fiction Photography Eve",
+      "enconvert_quality": 0.7,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1398,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "slow_render": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "World Edition - The Atlantic Skip to content Site Navigation The Atlantic Popular Latest Newsletters Sections Ideas Politics Economy Global National Security Washington Week Features Technology AI Watchdog Science Planet Health Philosophy Education Culture Comedy Family Books Fiction Photography Eve"
+    },
+    {
+      "url": "https://www.businessinsider.com/",
+      "category": "paywalled   # freemium / metered",
+      "naive_status": 200,
+      "naive_final_url": "https://www.businessinsider.com/",
+      "naive_word_count": 1447,
+      "naive_bytes": 610867,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Business Insider - Latest News in Tech, Markets, Economy & Innovation Business Insider Subscribe Newsletters Business Strategy Economy Finance Retail Advertising Careers Law Media Real Estate Small Business The Better Work Project Personal Finance Tech Science AI Enterprise Transportation Startups I",
+      "enconvert_quality": 0.85,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1463,
+      "enconvert_deductions": {
+        "js_errors": 0.1,
+        "resource_failures": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Business Insider - Latest News in Tech, Markets, Economy & Innovation Business Insider Subscribe Newsletters Business Strategy Economy Finance Retail Advertising Careers Law Media Real Estate Small Business The Better Work Project Personal Finance Tech Science AI Enterprise Transportation Startups I"
+    },
+    {
+      "url": "https://www.nytimes.com/",
+      "category": "paywalled   # metered / dynamic",
+      "naive_status": 200,
+      "naive_final_url": "https://www.nytimes.com/",
+      "naive_word_count": 4118,
+      "naive_bytes": 1580281,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "The New York Times - Breaking News, US News, World News and Videos Skip to content Skip to site index SKIP ADVERTISEMENT U.S. International Canada Espa\u00f1ol \u4e2d\u6587 Today\u2019s Paper U.S. SECTIONS U.S. Politics New York California Education Health Obituaries Science Climate Weather Sports Business Tech The Ups",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 9064,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "The New York Times - Breaking News, US News, World News and Videos Manage Privacy Preferences We and our vendors use cookies and similar methods (\u201cCookies\u201d) to recognize visitors and remember their preferences. We also use Cookies for a variety of purposes, including analytics, to measure marketing "
+    },
+    {
+      "url": "https://web.telegram.org/",
+      "category": "js-heavy    # ~1.5KB shell",
+      "naive_status": 200,
+      "naive_final_url": "https://web.telegram.org/",
+      "naive_word_count": 2,
+      "naive_bytes": 1587,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "Telegram Web",
+      "enconvert_quality": 0.45,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 39,
+      "enconvert_deductions": {
+        "login_wall": 0.4,
+        "empty_body": 0.15
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Telegram Log in to Telegram by QR Code Open Telegram on your phone Go to Settings > Devices > Add Device Point your phone at this screen to confirm login Log in by phone number Log in with Passkey"
+    },
+    {
+      "url": "https://www.messenger.com/",
+      "category": "js-heavy    # ~1.1KB shell",
+      "naive_status": 200,
+      "naive_final_url": "https://www.messenger.com/",
+      "naive_word_count": 125,
+      "naive_bytes": 109386,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Messenger Features Useful Show up for your family and friends with everyday connection. Social Build community with people who share your passions and interests. Expressive Let your personality shine and express yourself beyond words. Privacy and safety For developers Help Centre A place for meaning",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 127,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Messenger Features Useful Show up for your family and friends with everyday connection. Social Build community with people who share your passions and interests. Expressive Let your personality shine and express yourself beyond words. Privacy and safety For developers Help Centre A place for meaning"
+    },
+    {
+      "url": "https://app.diagrams.net/",
+      "category": "js-heavy    # draw.io, ~2.7KB shell",
+      "naive_status": 200,
+      "naive_final_url": "https://app.diagrams.net/",
+      "naive_word_count": 68,
+      "naive_bytes": 2759,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Flowchart Maker & Online Diagram Software Flowchart Maker and Online Diagram Software draw.io is free online diagram software. You can use it as a flowchart maker, network diagram software, to create UML online, as an ER diagram tool, to design database schema, to build BPMN online, as a circuit dia",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1818,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "draw.io File Edit View Arrange Extras Help Share More Results General Misc Advanced Basic Arrows Arrows Clipart / Computer Clipart / Finance Clipart / Various Clipart / Networking Clipart / People Clipart / Telecommunication Flowchart Active Directory Android Atlassian Bootstrap Data Flow Diagram En"
+    },
+    {
+      "url": "https://app.element.io/",
+      "category": "js-heavy    # Matrix client, ~4.7KB shell",
+      "naive_status": 200,
+      "naive_final_url": "https://app.element.io/",
+      "naive_word_count": 1,
+      "naive_bytes": 4767,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "Element",
+      "enconvert_quality": 0.75,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 21,
+      "enconvert_deductions": {
+        "empty_body": 0.15,
+        "js_errors": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Element Be in your element Supercharged for speed and simplicity. Sign in Create account English Blog Mastodon GitHub Powered by Matrix"
+    },
+    {
+      "url": "https://app.aave.com/",
+      "category": "js-heavy    # DeFi dashboard, empty #root",
+      "naive_status": 200,
+      "naive_final_url": "https://app.aave.com/",
+      "naive_word_count": 6,
+      "naive_bytes": 5514,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "Aave - Open Source Liquidity Protocol",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1191,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Aave - Open Source Liquidity Protocol Aave V4 is now live on Ethereum mainnet. TRY IT OUT HERE Dashboard Markets Governance Savings Staking More Connect wallet Core Market V3 Main Ethereum market with the largest selection of assets and yield options Favourite Total market size $ 18.08B Total availa"
+    },
+    {
+      "url": "https://open.spotify.com/",
+      "category": "js-heavy    # web player shell",
+      "naive_status": 200,
+      "naive_final_url": "https://open.spotify.com/",
+      "naive_word_count": 4,
+      "naive_bytes": 6020,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "Spotify \u2013 Web Player",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1438,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Spotify - Web Player: Music for everyone Spotify Open App Spotify logo Listen without limits. Try 2 months of Premium Standard for \u20b9139. Only \u20b9139/month after. Cancel anytime. Try 2 months for \u20b9139 View all plans \u20b9139 for 2 months, then \u20b9139 per month after. Offer only available if you haven't tried"
+    },
+    {
+      "url": "https://excalidraw.com/",
+      "category": "js-heavy    # whiteboard, empty #root",
+      "naive_status": 200,
+      "naive_final_url": "https://excalidraw.com/",
+      "naive_word_count": 3,
+      "naive_bytes": 6862,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "Excalidraw Whiteboard Excalidraw",
+      "enconvert_quality": 0.85,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 82,
+      "enconvert_deductions": {
+        "empty_body": 0.15
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Excalidraw Whiteboard Excalidraw Your drawings are saved in your browser's storage. Browser storage can be cleared unexpectedly. Save your work to a file regularly to avoid losing it. Open Ctrl+O Help ? Live collaboration... Sign up Export, preferences, languages, ... Pick a tool & Start drawing! To"
+    },
+    {
+      "url": "https://pancakeswap.finance/",
+      "category": "js-heavy    # DeFi app shell",
+      "naive_status": 200,
+      "naive_final_url": "https://pancakeswap.finance/",
+      "naive_word_count": 1,
+      "naive_bytes": 7093,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "PancakeSwap",
+      "enconvert_quality": 0.9,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 262,
+      "enconvert_deductions": {
+        "js_errors": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Home | PancakeSwap Portfolio Trade Swap Buy Crypto Stocks New Perps Earn Farm / Liquidity Syrup Pools More Prediction Lottery CAKE.PAD AI Springboard Search / Connect Wallet Connect Everyone's Favorite DEX Trade Crypto Instantly Across 10 Chains From BNB BNB Chain ~0 USD To CAKE BNB Chain ~0 USD Get"
+    },
+    {
+      "url": "https://app.uniswap.org/",
+      "category": "js-heavy    # swap app, empty #root",
+      "naive_status": 200,
+      "naive_final_url": "https://app.uniswap.org/",
+      "naive_word_count": 2,
+      "naive_bytes": 8722,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "Uniswap Interface",
+      "enconvert_quality": 0.9,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 529,
+      "enconvert_deductions": {
+        "js_errors": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Uniswap | Trade Crypto on DeFi\u2019s Leading Exchange Trade Explore Pool Portfolio Get started LINK 0.24% MKR 0.94% USDT 0% EURC 0.05% COMP 0% UNI 1.61% MANA 0.32% USDC 0% Swap anytime, anywhere. Sell ETH $0 Buy 0 Select token $0 Get started Buy and sell crypto with zero app fees on 21+ networks includi"
+    },
+    {
+      "url": "https://www.photopea.com/",
+      "category": "js-heavy    # image editor (canvas) shell",
+      "naive_status": 200,
+      "naive_final_url": "https://www.photopea.com/",
+      "naive_word_count": 439,
+      "naive_bytes": 15694,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "\ufeff Photopea | Online Photo Editor Photopea Learn Tutorials Templates API Free Online Photo Editor Unlock your creativity with the best free photo editor. Transform your photos with professional-grade tools in a free online photo editor that works right in your browser. No downloads, no hassle. Start ",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 438,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Photopea | Online Photo Editor Photopea Learn Tutorials Templates API Free Online Photo Editor Unlock your creativity with the best free photo editor. Transform your photos with professional-grade tools in a free online photo editor that works right in your browser. No downloads, no hassle. Start us"
+    },
+    {
+      "url": "https://jup.ag/",
+      "category": "js-heavy    # Solana swap, needs-JS",
+      "naive_status": 200,
+      "naive_final_url": "https://jup.ag/",
+      "naive_word_count": 79,
+      "naive_bytes": 58879,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Jupiter: The Home of Onchain Finance Jupiter Rewards Connecting The Home of Onchain Finance Market Limit Recurring Ultra Sell $0 Buy Paste CA $0 Connect Find Cooking Tokens with Jupiter Terminal Trade Your Opinions with Jupiter Prediction Markets Trade up to 250x Leverage with Jupiter Perps Earn Yie",
+      "enconvert_quality": 0.9,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 174,
+      "enconvert_deductions": {
+        "js_errors": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Jupiter: The Home of Onchain Finance Jupiter Swap Terminal Perps Lend Predict Portfolio More Search anything / Rewards Connect SOL $82.62 1.3% JUP $0.24189 1.2% The Home of Onchain Finance The World Cup 2026 Quarter Finals are live The World Cup 2026 Quarter Finals are live Kickoff's coming. Get you"
+    },
+    {
+      "url": "https://x.com/",
+      "category": "js-heavy    # social feed, JS shell + edge",
+      "naive_status": 200,
+      "naive_final_url": "https://x.com/",
+      "naive_word_count": 29,
+      "naive_bytes": 265524,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Something went wrong, but don\u2019t fret \u2014 let\u2019s give it another shot. Try again Some privacy related extensions may cause issues on x.com. Please disable them and try again.",
+      "enconvert_quality": 0.85,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 72,
+      "enconvert_deductions": {
+        "empty_body": 0.15
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "X. It\u2019s what\u2019s happening / X Happening now. Continue with phone Continue with Apple Continue with Apple or Email or username Email or username Continue By continuing, you agree to our Terms of Service , Privacy Policy and Cookie Use . About \u00b7 Get App \u00b7 Grok \u00b7 Help \u00b7 Terms \u00b7 Privacy \u00b7 Cookies \u00b7 Caree"
+    },
+    {
+      "url": "https://dexscreener.com/",
+      "category": "js-heavy    # crypto dashboard (React) + CF",
+      "naive_status": 403,
+      "naive_final_url": "https://dexscreener.com/",
+      "naive_word_count": 3,
+      "naive_bytes": 5875,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell",
+        "bot_challenge",
+        "http_403"
+      ],
+      "naive_excerpt": "Just a moment...",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 2797,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "DEX Screener Get the App! Explore Search / Get the App! Watchlist Alerts Multicharts New Pairs Gainers & Losers API Advertise more Solana BSC Ethereum Base Polygon Robinhood PulseChain TON Monad HyperEVM Avalanche XRPL Hyperliquid Arbitrum Tron Sui Sonic Abstract Cronos World Chain Hedera NEAR Optim"
+    },
+    {
+      "url": "https://defillama.com/",
+      "category": "js-heavy    # DeFi dashboard (Next.js) + CF",
+      "naive_status": 200,
+      "naive_final_url": "https://defillama.com/",
+      "naive_word_count": 1446,
+      "naive_bytes": 6557059,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "DefiLlama - DeFi Dashboard & Crypto Analytics Navigate to DeFi Dashboard Home Metrics Tools Chains Yields Stablecoins RWA MiCA New Tokens Equities Support API & MCP DEX Aggregator Investor Relations DefiLlama Research PREMIUM Try free Pricing LlamaAI Downloads Custom Dashboards Sheets LlamaFeed Old ",
+      "enconvert_quality": 0.9,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 1446,
+      "enconvert_deductions": {
+        "slow_render": 0.1
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "DefiLlama - DeFi Dashboard & Crypto Analytics Navigate to DeFi Dashboard Home Metrics Tools Chains Yields Stablecoins RWA MiCA New Tokens Equities Support API & MCP DEX Aggregator Investor Relations DefiLlama Research PREMIUM Try free Pricing LlamaAI Downloads Custom Dashboards Sheets LlamaFeed Old "
+    },
+    {
+      "url": "https://tldraw.com/",
+      "category": "js-heavy    # whiteboard SPA shell",
+      "naive_status": 200,
+      "naive_final_url": "https://www.tldraw.com/",
+      "naive_word_count": 13,
+      "naive_bytes": 12901,
+      "naive_error": null,
+      "naive_silent_fail": true,
+      "naive_fail_reasons": [
+        "empty_shell"
+      ],
+      "naive_excerpt": "tldraw \u2022 very good free whiteboard tldraw - free and instant collaborative whiteboarding",
+      "enconvert_quality": 0.85,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 27,
+      "enconvert_deductions": {
+        "empty_body": 0.15
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "tldraw \u2022 very good free whiteboard tldraw - free and instant collaborative whiteboarding Build with the tldraw SDK Move focus to canvas Sign in to share 100%"
+    },
+    {
+      "url": "https://coinmarketcap.com/",
+      "category": "js-heavy    # JS-heavy + Cloudflare",
+      "naive_status": 200,
+      "naive_final_url": "https://coinmarketcap.com/",
+      "naive_word_count": 2416,
+      "naive_bytes": 861888,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Cryptocurrency Prices, Charts And Market Capitalizations | CoinMarketCap Cryptocurrencies Cryptocurrencies Ranking Categories Historical Snapshots Token unlocks Yield Real-World Assets Leaderboards Trending Upcoming Recently Added Gainers & Losers Most Visited Community Sentiment Chain Ranking Predi",
+      "enconvert_quality": 1.0,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 3091,
+      "enconvert_deductions": {},
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Cryptocurrency Prices, Charts And Market Capitalizations | CoinMarketCap Use CoinMarketCap APP Get a better and more comprehensive user experience Open Cryptos: 53.49M Exchanges: 952 Cryptocurrencies Cryptocurrencies Ranking Categories Historical Snapshots Token unlocks Yield Real-World Assets Leade"
+    },
+    {
+      "url": "https://www.coingecko.com/",
+      "category": "js-heavy    # JS-heavy dashboard",
+      "naive_status": 200,
+      "naive_final_url": "https://www.coingecko.com/",
+      "naive_word_count": 4052,
+      "naive_bytes": 2294133,
+      "naive_error": null,
+      "naive_silent_fail": false,
+      "naive_fail_reasons": [],
+      "naive_excerpt": "Cryptocurrency Prices, Charts, and Crypto Market Cap | CoinGecko \ud83d\udcca Now LIVE: TradFi on Crypto Exchanges Report 2026 Coins: 17,329 Exchanges: 1,493 Market Cap: $2.281T 0.3% 24h Vol: $72.031B Dominance: BTC 56.4% ETH 9.55% Gas: 0.121 GWEI Fast: 0.134 GWEI Standard: 0.121 GWEI Safe: 0.121 GWEI Data by ",
+      "enconvert_quality": 0.75,
+      "enconvert_is_blocked": false,
+      "enconvert_word_count": 4780,
+      "enconvert_deductions": {
+        "js_errors": 0.2,
+        "resource_failures": 0.05
+      },
+      "enconvert_error": null,
+      "enconvert_flagged": false,
+      "enconvert_excerpt": "Cryptocurrency Prices, Charts, and Crypto Market Cap | CoinGecko \ud83d\udcca Now LIVE: TradFi on Crypto Exchanges Report 2026 Coins: 17,329 Exchanges: 1,493 Market Cap: $2.281T 0.3% 24h Vol: $72.031B Dominance: BTC 56.4% ETH 9.55% Gas: 0.121 GWEI Fast: 0.134 GWEI Standard: 0.121 GWEI Safe: 0.121 GWEI Data by "
+    }
+  ]
+}
