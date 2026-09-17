@@ -1,0 +1,100 @@
+name: weekly benchmark
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"   # Mondays 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      corpus:
+        description: "legacy (50 URLs) or v2 (200 URLs)"
+        type: choice
+        options: [v2, legacy]
+        default: v2
+      limit:
+        description: "first N URLs only (0 = all); use 3 for a smoke run"
+        default: "0"
+
+permissions:
+  contents: write
+
+# Runs never overlap: a late-running week finishes before the next starts.
+concurrency:
+  group: weekly-benchmark
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - id: matrix
+        # The India leg targets a self-hosted runner label. A job aimed at a
+        # label with no registered runner queues for 24 h and then fails, so
+        # it is only added when the repo variable HAS_IN_RUNNER is "true"
+        # (set it after registering the droplet runner; see README).
+        env:
+          HAS_IN_RUNNER: ${{ vars.HAS_IN_RUNNER }}
+        run: |
+          matrix='[{"runner":"ubuntu-latest","region":"gh-hosted"}]'
+          if [ "$HAS_IN_RUNNER" = "true" ]; then
+            matrix='[{"runner":"ubuntu-latest","region":"gh-hosted"},{"runner":"self-hosted-in","region":"in"}]'
+          fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  run:
+    needs: plan
+    strategy:
+      fail-fast: false
+      max-parallel: 1   # legs commit to the same branch; serialize instead of racing
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Chromium (GitHub-hosted, with system deps)
+        if: matrix.runner == 'ubuntu-latest'
+        run: playwright install --with-deps chromium
+
+      - name: Install Chromium (self-hosted, deps preinstalled by the runner owner)
+        if: matrix.runner != 'ubuntu-latest'
+        run: playwright install chromium
+
+      - name: Run the harness
+        env:
+          ENCONVERT_API_KEY: ${{ secrets.ENCONVERT_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+          SCRAPINGBEE_API_KEY: ${{ secrets.SCRAPINGBEE_API_KEY }}
+          CORPUS: ${{ inputs.corpus || 'v2' }}
+          LIMIT: ${{ inputs.limit || '0' }}
+          REGION: ${{ matrix.region }}
+        run: |
+          python perceive_benchmark.py urls.txt \
+            --corpus "$CORPUS" --limit "$LIMIT" --region "$REGION" \
+            --out "results/$(date -u +%F)-$REGION.json"
+
+      - name: Regenerate results.md from the newest run per region
+        run: python analyze.py results/
+
+      - name: Commit results
+        env:
+          REGION: ${{ matrix.region }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/ results.md
+          git commit -m "results: $(date -u +%F) $REGION" || { echo "nothing to commit"; exit 0; }
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

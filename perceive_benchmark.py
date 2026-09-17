@@ -1,77 +1,63 @@
 #!/usr/bin/env python3
-"""Enconvert "silent failure" benchmark: perceive vs. a naive fetch.
+"""EnConvert silent-failure benchmark, v2: six arms over a fixed public corpus.
 
-Runs a fixed, public set of bot-gated / paywalled / JS-heavy URLs two ways:
+Every arm is asked for the same URL once. Whatever body it returns AS
+CONTENT is scored with EnConvert's own render-quality scorer (scorer.py,
+vendored byte-for-byte from the gateway). An arm "silently returned a block
+page" when it answered success (2xx) and that body is a block page, a login
+gate, an error page or an empty shell, and the arm did not label it. Only the
+hosted EnConvert arm can label a read (is_blocked / render_quality), so for
+it the miss test is: is_blocked false AND the body is blocked per the scorer.
 
-1. NAIVE FETCH  — a single HTTP GET with a real browser User-Agent, no
-   JavaScript. This is what a naive scraper / `fetch()` gets. We then ask:
-   did the server hand back a *block page* (Cloudflare/CAPTCHA challenge),
-   an empty JS shell, or a paywall gate that a naive consumer would ingest
-   as if it were the real content? If so, the naive fetch *silently failed*.
+Arms (each optional; skipped with a note when its key is absent):
 
-2. ENCONVERT PERCEIVE — the page is rendered in a real headless browser via
-   crawl4ai (the exact BrowserConfig + CrawlerRunConfig the Enconvert gateway
-   uses in production: stealth, magic mode, simulate-user, override-navigator)
-   and scored by Enconvert's 8-point render-quality scorer (scorer.py, vendored
-   verbatim from the gateway). A render is *flagged* when render_quality < 0.40
-   — Enconvert never silently returns a block page as content; it either renders
-   the real page or tells you the render is low quality.
+    naive        httpx GET, real Chrome headers, no JavaScript
+    crawl4ai     crawl4ai 0.8.9 open-source, Chromium + stealth, direct
+    enconvert    POST https://api.enconvert.com/v2/perceive      ENCONVERT_API_KEY
+    firecrawl    POST https://api.firecrawl.dev/v2/scrape          FIRECRAWL_API_KEY
+    jina         GET  https://r.jina.ai/<url>                      JINA_API_KEY (optional)
+    scrapingbee  GET  https://app.scrapingbee.com/api/v1           SCRAPINGBEE_API_KEY
 
-Outputs: results.json (full per-URL data) and results.md (summary), and prints
-the four headline numbers the Enconvert MCP page reports.
+Usage:
+    python perceive_benchmark.py urls.txt                 # every arm with a key
+    python perceive_benchmark.py urls.txt --arms naive,crawl4ai --limit 3
+    python perceive_benchmark.py urls.txt --corpus legacy --region in --out results/x.json
 
-Reproduce:
-    pip install -r requirements.txt
-    playwright install chromium
-    python perceive_benchmark.py urls.txt
+Writes the JSON rows, then calls analyze.py to fold in the summary and write
+results.md. Definitions live in analyze.py; the README explains the method.
 """
 
 from __future__ import annotations
 
+import argparse
 import asyncio
+import hashlib
 import json
+import os
 import sys
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Awaitable, Callable, Optional
 
 import httpx
 from bs4 import BeautifulSoup
-from crawl4ai import AsyncWebCrawler, BrowserConfig, CacheMode, CrawlerRunConfig
 
+import analyze
 from instrumentation import PageInstrumentation
 from scorer import score
 
-# --------------------------------------------------------------------------
-# Enconvert gateway render configuration (copied verbatim from
-# services/browser/converters/browser_manager.py and arun_flow.py so this
-# harness renders exactly as production does).
-# --------------------------------------------------------------------------
+SCHEMA_VERSION = 2
+QUALITY_FLOOR = analyze.QUALITY_FLOOR
 
-QUALITY_FLOOR = 0.40  # services/v2_engine/watch_flow.py: QUALITY_FLOOR
+ENCONVERT_URL = "https://api.enconvert.com/v2/perceive"
+FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape"
+JINA_URL = "https://r.jina.ai/"
+SCRAPINGBEE_URL = "https://app.scrapingbee.com/api/v1"
 
-V1_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-
-CHROMIUM_MEMORY_FLAGS: list[str] = [
-    "--no-sandbox",
-    "--disable-gpu",
-    "--disable-dev-shm-usage",
-    "--disable-setuid-sandbox",
-    "--js-flags=--max-old-space-size=256",
-    "--disable-extensions",
-    "--disable-background-networking",
-    "--disable-background-timer-throttling",
-    "--disable-backgrounding-occluded-windows",
-    "--disable-renderer-backgrounding",
-    "--aggressive-cache-discard",
-    "--disk-cache-size=1",
-    "--memory-pressure-off",
-]
-
-# A full modern-Chrome header set for the NAIVE fetch. We deliberately give
-# the naive path its *best shot* — a real browser UA and Accept headers — so
-# the benchmark measures the JS/bot-gate barrier, not UA-string blocking.
+# A full modern-Chrome header set for the NAIVE fetch. The naive path gets
+# its best shot on purpose (browser UA and Accept headers) so the benchmark
+# measures the JS / bot-gate barrier, not UA-string blocking.
 NAIVE_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -89,51 +75,30 @@ NAIVE_HEADERS = {
     "Sec-Fetch-Site": "none",
     "Sec-Fetch-User": "?1",
 }
-
 NAIVE_TIMEOUT_S = 25.0
+VENDOR_TIMEOUT_S = 120.0
+# The hosted ladder may spend up to 240 s escalating engines.
+ENCONVERT_TIMEOUT_S = 300.0
 
-# HTTP statuses that mean "the server refused" but still return a body a
-# naive `resp.text` consumer would ingest.
-_BLOCK_STATUSES = frozenset({401, 403, 429, 451, 503})
-
-# Visible-word thresholds that keep the classifier conservative — a signal
-# only counts as a silent failure when the page is NOT already a full,
-# usable content page:
-#   - empty_shell: essentially no readable content at all.
-#   - bot_challenge: the challenge markers must DOMINATE the body, not merely
-#     be embedded scripts (an invisible Cloudflare turnstile on a page that
-#     still returned real content is NOT a failure).
-#   - http refusal: a block status with a non-content-sized body.
-_EMPTY_SHELL_WORDS = 20
-_BOT_CHALLENGE_MAX_WORDS = 100
-_HTTP_BLOCK_MAX_WORDS = 800
-
-# Unambiguous paywall / gate intent phrases (phrases that only appear on a
-# content gate, not on ordinary marketing/SaaS pages). Matched only on a
-# THIN page (few words) so a full metered article that merely mentions
-# "subscribe" in its footer is NOT counted as a silent failure. Every
-# paywall_gate classification is additionally reviewed by hand before the
-# headline numbers are published.
-_PAYWALL_MARKERS: tuple[str, ...] = (
-    "subscribe to continue",
-    "subscribe to read",
-    "to continue reading",
-    "continue reading your article",
-    "already a subscriber",
-    "this article is for subscribers",
-    "this content is for subscribers",
-    "for subscribers only",
-    "subscribers only",
-    "sign in to read",
-    "log in to read",
-    "register to continue",
-    "unlock this article",
-    "you've reached your",
-    "you have reached your",
-    "you have read your",
-    "join to continue reading",
-)
-_PAYWALL_MAX_WORDS = 550
+# crawl4ai arm: plain Chromium with stealth, the open-source engine on its
+# own (no TLS rung, no escalation). Flags match the gateway's Chromium
+# launch so the render is comparable to a self-hosted deployment.
+V1_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+CHROMIUM_MEMORY_FLAGS: list[str] = [
+    "--no-sandbox",
+    "--disable-gpu",
+    "--disable-dev-shm-usage",
+    "--disable-setuid-sandbox",
+    "--js-flags=--max-old-space-size=256",
+    "--disable-extensions",
+    "--disable-background-networking",
+    "--disable-background-timer-throttling",
+    "--disable-backgrounding-occluded-windows",
+    "--disable-renderer-backgrounding",
+    "--aggressive-cache-discard",
+    "--disk-cache-size=1",
+    "--memory-pressure-off",
+]
 
 _INVISIBLE_TAGS = ("script", "style", "noscript", "template")
 
@@ -146,140 +111,74 @@ def visible_text(html: str) -> str:
 
 
 # --------------------------------------------------------------------------
-# Data model
+# Data model: one record per (URL, arm)
 # --------------------------------------------------------------------------
 
 
 @dataclass
-class UrlResult:
-    url: str
-    category: str
-
-    # Naive fetch
-    naive_status: Optional[int] = None
-    naive_final_url: Optional[str] = None
-    naive_word_count: Optional[int] = None
-    naive_bytes: Optional[int] = None
-    naive_error: Optional[str] = None
-    naive_silent_fail: bool = False
-    naive_fail_reasons: list[str] = field(default_factory=list)
-    naive_excerpt: str = ""
-
-    # Enconvert perceive
-    enconvert_quality: Optional[float] = None
-    enconvert_is_blocked: Optional[bool] = None
-    enconvert_word_count: Optional[int] = None
-    enconvert_deductions: dict[str, float] = field(default_factory=dict)
-    enconvert_error: Optional[str] = None
-    enconvert_flagged: bool = False
-    enconvert_excerpt: str = ""
+class ArmResult:
+    arm: str
+    skipped: Optional[str] = None      # why the arm did not run (missing key, not installed)
+    ok: bool = False                   # the arm answered success with a body
+    arm_status: Optional[int] = None   # HTTP status the arm itself answered with
+    upstream_status: Optional[int] = None  # status the arm reports for the target document
+    error: Optional[str] = None
+    elapsed_ms: Optional[int] = None
+    cost: Optional[float] = None       # in the arm's own unit, never converted to money
+    cost_unit: Optional[str] = None
+    word_count: Optional[int] = None
+    quality: Optional[float] = None    # local scorer on the body the arm returned
+    deductions: dict[str, float] = field(default_factory=dict)
+    reported_quality: Optional[float] = None    # hosted arm: what the API said
+    reported_is_blocked: Optional[bool] = None
+    reported_deductions: dict[str, float] = field(default_factory=dict)
+    billed: Optional[bool] = None
+    labelled: bool = False             # the arm flagged the read itself (hosted only)
+    silent_block: bool = False         # ok, block body, not labelled
+    excerpt: str = ""
 
 
-# --------------------------------------------------------------------------
-# 1. Naive fetch
-# --------------------------------------------------------------------------
-
-
-async def naive_fetch(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
-    try:
-        resp = await client.get(url, headers=NAIVE_HEADERS)
-        body = resp.text
-        return {
-            "status": resp.status_code,
-            "final_url": str(resp.url),
-            "body": body,
-            "error": None,
-        }
-    except Exception as exc:  # noqa: BLE001
-        return {
-            "status": None,
-            "final_url": None,
-            "body": "",
-            "error": f"{type(exc).__name__}: {exc}",
-        }
-
-
-def classify_naive(url: str, fetched: dict[str, Any], row: UrlResult) -> None:
-    row.naive_status = fetched["status"]
-    row.naive_final_url = fetched["final_url"]
-    row.naive_error = fetched["error"]
-
-    if fetched["error"] is not None:
-        # A raised exception is a LOUD failure (the consumer sees an error),
-        # not a silent one. We record it but do NOT count it as a silent fail.
-        row.naive_silent_fail = False
-        return
-
-    body = fetched["body"] or ""
-    row.naive_bytes = len(body.encode("utf-8", "replace"))
-    text = visible_text(body)
-    word_count = len(text.split())
-    row.naive_word_count = word_count
-    row.naive_excerpt = " ".join(text.split())[:300]
-
-    # Reuse Enconvert's own scorer to judge whether the naive body is a
-    # block / empty page — the exact same block-marker logic the gateway uses.
-    instr = PageInstrumentation(requested_url=url, final_url=fetched["final_url"])
+def finish(res: ArmResult, body: str, instr: PageInstrumentation) -> None:
+    """Score the returned body locally and derive the silent-block verdict."""
+    text = " ".join(visible_text(body).split())
+    res.word_count = len(text.split())
+    res.excerpt = text[:300]
     verdict = score(body, instr, None)
+    res.quality = verdict.score
+    res.deductions = dict(verdict.deductions)
+    res.silent_block = res.ok and not res.labelled and analyze.is_block_body(res.deductions)
 
-    reasons: list[str] = []
-    if word_count < _EMPTY_SHELL_WORDS:
-        reasons.append("empty_shell")
 
-    # A challenge/CAPTCHA page: Enconvert's own block markers fire AND the
-    # challenge dominates the body (thin page). This guard is what keeps a
-    # full content page that merely embeds an invisible Cloudflare turnstile
-    # (e.g. coinmarketcap returning 2,400 words) from being miscounted.
-    if verdict.is_blocked and word_count < _BOT_CHALLENGE_MAX_WORDS:
-        reasons.append("bot_challenge")
-
-    lowered = text.lower()
-    if word_count < _PAYWALL_MAX_WORDS and any(m in lowered for m in _PAYWALL_MARKERS):
-        reasons.append("paywall_gate")
-
-    if (
-        fetched["status"] in _BLOCK_STATUSES
-        and word_count < _HTTP_BLOCK_MAX_WORDS
-    ):
-        reasons.append(f"http_{fetched['status']}")
-
-    row.naive_fail_reasons = reasons
-    row.naive_silent_fail = len(reasons) > 0
+def _err(exc: BaseException) -> str:
+    return f"{type(exc).__name__}: {str(exc)[:200]}"
 
 
 # --------------------------------------------------------------------------
-# 2. Enconvert perceive (crawl4ai render + real scorer)
+# Arms
 # --------------------------------------------------------------------------
 
 
-def build_browser_config() -> BrowserConfig:
-    return BrowserConfig(
-        browser_type="chromium",
-        headless=True,
-        enable_stealth=True,
-        extra_args=list(CHROMIUM_MEMORY_FLAGS),
-        text_mode=False,
-        verbose=False,
-    )
+async def arm_naive(client: httpx.AsyncClient, url: str) -> ArmResult:
+    res = ArmResult("naive", cost_unit="requests", cost=1.0)
+    try:
+        resp = await client.get(url, headers=NAIVE_HEADERS, timeout=NAIVE_TIMEOUT_S)
+    except Exception as exc:  # noqa: BLE001 - any transport failure is a loud error
+        res.error = _err(exc)
+        return res
+    res.arm_status = res.upstream_status = resp.status_code
+    res.ok = 200 <= resp.status_code < 300
+    if not res.ok:
+        res.error = f"http_{resp.status_code}"
+    finish(res, resp.text, PageInstrumentation(
+        requested_url=url, final_url=str(resp.url), http_status=resp.status_code,
+    ))
+    return res
 
 
-def build_run_config() -> CrawlerRunConfig:
-    return CrawlerRunConfig(
-        pdf=False,
-        screenshot=False,
-        magic=True,
-        simulate_user=True,
-        override_navigator=True,
-        cache_mode=CacheMode.BYPASS,
-        wait_until="load",
-        page_timeout=60000,
-        user_agent=V1_USER_AGENT,
-        max_retries=0,
-        verbose=False,
-    )
+async def arm_crawl4ai(crawler: Any, url: str) -> ArmResult:
+    from crawl4ai import CacheMode, CrawlerRunConfig
 
-
-async def enconvert_render(crawler: AsyncWebCrawler, url: str, row: UrlResult) -> None:
+    res = ArmResult("crawl4ai", cost_unit="renders", cost=1.0)
     instr = PageInstrumentation(requested_url=url)
     strategy = crawler.crawler_strategy
 
@@ -288,38 +187,170 @@ async def enconvert_render(crawler: AsyncWebCrawler, url: str, row: UrlResult) -
         return page
 
     async def after_goto(page, context=None, url=None, response=None, config=None, **kwargs):  # noqa: ANN001
+        if response is not None:
+            instr.http_status = response.status  # mirrors perceive_flow's after_goto
         await instr.capture(page)
         return page
 
     strategy.set_hook("before_goto", before_goto)
     strategy.set_hook("after_goto", after_goto)
-
+    config = CrawlerRunConfig(
+        magic=True, simulate_user=True, override_navigator=True,
+        cache_mode=CacheMode.BYPASS, wait_until="load", page_timeout=60000,
+        user_agent=V1_USER_AGENT, max_retries=0, verbose=False,
+    )
     try:
-        result = await crawler.arun(url=url, config=build_run_config())
-        html = instr.rendered_html
-        if not html and result is not None:
-            html = getattr(result, "html", None) or ""
-        html = html or ""
-        if not html:
-            err = getattr(result, "error_message", None) if result else None
-            row.enconvert_error = f"no_html: {err or 'navigation/hook failure'}"
-            return
-        verdict = score(html, instr, None)
-        rendered_text = visible_text(html)
-        row.enconvert_quality = verdict.score
-        row.enconvert_is_blocked = verdict.is_blocked
-        row.enconvert_deductions = dict(verdict.deductions)
-        row.enconvert_word_count = len(rendered_text.split())
-        row.enconvert_excerpt = " ".join(rendered_text.split())[:300]
-        # Production surfaces a render as bad on EITHER signal: an explicit
-        # anti-bot / bot-detection block (is_blocked -> a warning + LLM
-        # extraction is skipped in perceive_flow, and /v2/watch short-circuits
-        # the diff), OR a sub-floor quality score. A page can be is_blocked yet
-        # score >= 0.40 (a single 0.5 bot-detection deduction), so flagging on
-        # the 0.40 floor alone would understate what the gateway actually flags.
-        row.enconvert_flagged = verdict.is_blocked or verdict.score < QUALITY_FLOOR
+        result = await crawler.arun(url=url, config=config)
     except Exception as exc:  # noqa: BLE001
-        row.enconvert_error = f"{type(exc).__name__}: {exc}"
+        res.error = _err(exc)
+        return res
+    html = instr.rendered_html or getattr(result, "html", None) or ""
+    res.upstream_status = instr.http_status or getattr(result, "status_code", None)
+    res.arm_status = res.upstream_status
+    if not html:
+        res.error = f"no_html: {getattr(result, 'error_message', None) or 'navigation failure'}"
+        return res
+    # crawl4ai marks a >= 400 document as success=False (a loud error); the
+    # upstream status is still fed to the scorer so a 2xx-wrapped error page
+    # (behind a proxy or CDN) would count as masked.
+    res.ok = bool(getattr(result, "success", True))
+    if not res.ok:
+        res.error = f"http_{res.upstream_status}: {str(getattr(result, 'error_message', ''))[:200]}"
+    finish(res, html, instr)
+    return res
+
+
+async def arm_enconvert(client: httpx.AsyncClient, url: str, key: str) -> ArmResult:
+    res = ArmResult("enconvert", cost_unit="ops")
+    try:
+        resp = await client.post(
+            ENCONVERT_URL, json={"url": url, "outputs": ["markdown"]},
+            headers={"X-API-Key": key}, timeout=ENCONVERT_TIMEOUT_S,
+        )
+    except Exception as exc:  # noqa: BLE001
+        res.error = _err(exc)
+        return res
+    res.arm_status = resp.status_code
+    if not 200 <= resp.status_code < 300:
+        res.error = f"http_{resp.status_code}: {resp.text[:200]}"
+        return res
+    data = resp.json()
+    res.ok = True
+    res.reported_quality = data.get("render_quality")
+    res.reported_is_blocked = data.get("is_blocked")
+    res.reported_deductions = data.get("deductions") or {}
+    res.upstream_status = data.get("status_code")
+    res.billed = data.get("billed")
+    res.cost = None if res.billed is None else float(res.billed)
+    # The product's own label. A blocked read is a 200 with is_blocked true
+    # and no outputs; a sub-floor render_quality is the other flag callers
+    # gate on. Either one means the read was not returned as clean content.
+    res.labelled = bool(res.reported_is_blocked) or (
+        res.reported_quality is not None and res.reported_quality < QUALITY_FLOOR
+    )
+    body = ""
+    md_url = ((data.get("outputs") or {}).get("markdown") or {}).get("url")
+    if md_url:
+        try:
+            body = (await client.get(md_url, timeout=VENDOR_TIMEOUT_S)).text  # signed URL, no key
+        except Exception as exc:  # noqa: BLE001
+            res.error = f"artifact: {_err(exc)}"
+    # The status code is not fed to the local scorer here: the API already
+    # labels it (status_code + http_error deduction => render_quality 0.3).
+    finish(res, body, PageInstrumentation(requested_url=url, final_url=data.get("url_final")))
+    return res
+
+
+async def arm_firecrawl(client: httpx.AsyncClient, url: str, key: str) -> ArmResult:
+    res = ArmResult("firecrawl", cost_unit="credits")
+    try:
+        resp = await client.post(
+            FIRECRAWL_URL, json={"url": url, "formats": ["rawHtml", "markdown"]},
+            headers={"Authorization": f"Bearer {key}"}, timeout=VENDOR_TIMEOUT_S,
+        )
+    except Exception as exc:  # noqa: BLE001
+        res.error = _err(exc)
+        return res
+    res.arm_status = resp.status_code
+    try:
+        payload = resp.json()
+    except ValueError:
+        payload = {}
+    if not (200 <= resp.status_code < 300 and payload.get("success")):
+        res.error = f"http_{resp.status_code}: {str(payload.get('error') or resp.text)[:200]}"
+        return res
+    data = payload.get("data") or {}
+    meta = data.get("metadata") or {}
+    res.ok = True
+    res.upstream_status = meta.get("statusCode")
+    # ponytail: Firecrawl bills one credit per basic scrape and states that
+    # error-status pages are returned and charged; creditsUsed wins when present.
+    res.cost = float(meta.get("creditsUsed", 1))
+    finish(res, data.get("rawHtml") or data.get("markdown") or "", PageInstrumentation(
+        requested_url=url, final_url=meta.get("url") or meta.get("sourceURL"),
+        http_status=res.upstream_status,
+    ))
+    return res
+
+
+async def arm_jina(client: httpx.AsyncClient, url: str, key: Optional[str]) -> ArmResult:
+    res = ArmResult("jina", cost_unit="tokens")
+    headers = {"Accept": "application/json"}
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+    try:
+        resp = await client.get(JINA_URL + url, headers=headers, timeout=VENDOR_TIMEOUT_S)
+    except Exception as exc:  # noqa: BLE001
+        res.error = _err(exc)
+        return res
+    res.arm_status = resp.status_code
+    if not 200 <= resp.status_code < 300:
+        res.error = f"http_{resp.status_code}: {resp.text[:200]}"
+        return res
+    try:
+        data = resp.json().get("data") or {}
+    except ValueError:
+        data = {"content": resp.text}
+    res.ok = True
+    res.cost = (data.get("usage") or {}).get("tokens")
+    # Jina returns text, not HTML, so the structural checks (title, h1,
+    # mount nodes) cannot fire; marker and word-count checks still do.
+    finish(res, data.get("content") or "", PageInstrumentation(
+        requested_url=url, final_url=data.get("url"),
+    ))
+    return res
+
+
+async def arm_scrapingbee(client: httpx.AsyncClient, url: str, key: str) -> ArmResult:
+    res = ArmResult("scrapingbee", cost_unit="credits")
+    try:
+        resp = await client.get(
+            SCRAPINGBEE_URL, params={"api_key": key, "url": url, "render_js": "true"},
+            timeout=VENDOR_TIMEOUT_S,
+        )
+    except Exception as exc:  # noqa: BLE001
+        res.error = _err(exc)
+        return res
+    res.arm_status = resp.status_code
+    initial = resp.headers.get("Spb-initial-status-code")
+    res.upstream_status = int(initial) if initial and initial.isdigit() else resp.status_code
+    cost = resp.headers.get("Spb-cost")
+    res.cost = float(cost) if cost else None
+    res.ok = 200 <= resp.status_code < 300
+    if not res.ok:
+        res.error = f"http_{resp.status_code}: {resp.text[:200]}"
+    finish(res, resp.text, PageInstrumentation(
+        requested_url=url, final_url=resp.headers.get("Spb-resolved-url"),
+        http_status=res.upstream_status,
+    ))
+    return res
+
+
+async def timed(fn: Callable[..., Awaitable[ArmResult]], *args: Any) -> ArmResult:
+    started = time.monotonic()
+    res = await fn(*args)
+    res.elapsed_ms = int((time.monotonic() - started) * 1000)
+    return res
 
 
 # --------------------------------------------------------------------------
@@ -327,192 +358,148 @@ async def enconvert_render(crawler: AsyncWebCrawler, url: str, row: UrlResult) -
 # --------------------------------------------------------------------------
 
 
-def load_urls(path: Path) -> list[tuple[str, str]]:
-    """Parse `urls.txt`. Lines are `URL<TAB or spaces>category`; # comments."""
-    out: list[tuple[str, str]] = []
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
+def load_urls(path: Path) -> list[tuple[str, str, str]]:
+    """Parse urls.txt: ``URL  category  [legacy|v2]   # note``."""
+    out: list[tuple[str, str, str]] = []
+    for raw in path.read_text().splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
             continue
-        parts = line.split(maxsplit=1)
+        parts = line.split()
         url = parts[0]
-        category = parts[1].strip() if len(parts) > 1 else "unknown"
-        out.append((url, category))
+        category = parts[1] if len(parts) > 1 else "unknown"
+        corpus = parts[2] if len(parts) > 2 else "v2"
+        out.append((url, category, corpus))
     return out
 
 
-async def run(urls: list[tuple[str, str]]) -> list[UrlResult]:
-    results: list[UrlResult] = []
-    browser_config = build_browser_config()
-    async with httpx.AsyncClient(
-        follow_redirects=True,
-        timeout=NAIVE_TIMEOUT_S,
-        verify=True,
-    ) as client:
-        crawler = AsyncWebCrawler(config=browser_config)
-        await crawler.start()
+def scorer_sha256() -> str:
+    return hashlib.sha256((Path(__file__).parent / "scorer.py").read_bytes()).hexdigest()
+
+
+async def run(urls: list[tuple[str, str, str]], arms: list[str]) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    keys = {
+        "enconvert": os.getenv("ENCONVERT_API_KEY"),
+        "firecrawl": os.getenv("FIRECRAWL_API_KEY"),
+        "jina": os.getenv("JINA_API_KEY"),
+        "scrapingbee": os.getenv("SCRAPINGBEE_API_KEY"),
+    }
+    skipped: dict[str, str] = {}
+    for arm, env in (("enconvert", "ENCONVERT_API_KEY"), ("firecrawl", "FIRECRAWL_API_KEY"),
+                     ("scrapingbee", "SCRAPINGBEE_API_KEY")):
+        if arm in arms and not keys[arm]:
+            skipped[arm] = f"no {env}"
+
+    crawler = None
+    if "crawl4ai" in arms:
         try:
-            for i, (url, category) in enumerate(urls, 1):
-                row = UrlResult(url=url, category=category)
-                print(f"[{i:>2}/{len(urls)}] {url}", flush=True)
-                fetched = await naive_fetch(client, url)
-                classify_naive(url, fetched, row)
-                await enconvert_render(crawler, url, row)
-                q = row.enconvert_quality
-                print(
-                    f"        naive: silent_fail={row.naive_silent_fail} "
-                    f"{row.naive_fail_reasons}  |  "
-                    f"enconvert: q={q if q is None else round(q, 3)} "
-                    f"flagged={row.enconvert_flagged} "
-                    f"{'ERR:' + row.enconvert_error if row.enconvert_error else ''}",
-                    flush=True,
-                )
-                results.append(row)
-        finally:
+            from crawl4ai import AsyncWebCrawler, BrowserConfig
+            crawler = AsyncWebCrawler(config=BrowserConfig(
+                browser_type="chromium", headless=True, enable_stealth=True,
+                extra_args=list(CHROMIUM_MEMORY_FLAGS), text_mode=False, verbose=False,
+            ))
+            await crawler.start()
+        except Exception as exc:  # noqa: BLE001 - missing package or browser binary
+            skipped["crawl4ai"] = f"crawl4ai unavailable: {_err(exc)}"
+            crawler = None
+
+    rows: list[dict[str, Any]] = []
+    try:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            for i, (url, category, corpus) in enumerate(urls, 1):
+                print(f"[{i:>3}/{len(urls)}] {url}", flush=True)
+                tasks: dict[str, Awaitable[ArmResult]] = {}
+                if "naive" in arms:
+                    tasks["naive"] = timed(arm_naive, client, url)
+                if "enconvert" in arms and keys["enconvert"]:
+                    tasks["enconvert"] = timed(arm_enconvert, client, url, keys["enconvert"])
+                if "firecrawl" in arms and keys["firecrawl"]:
+                    tasks["firecrawl"] = timed(arm_firecrawl, client, url, keys["firecrawl"])
+                if "jina" in arms:
+                    tasks["jina"] = timed(arm_jina, client, url, keys["jina"])
+                if "scrapingbee" in arms and keys["scrapingbee"]:
+                    tasks["scrapingbee"] = timed(arm_scrapingbee, client, url, keys["scrapingbee"])
+                # The HTTP arms are independent services; the single Chromium
+                # runs afterwards so the render never competes for CPU.
+                done = await asyncio.gather(*tasks.values())
+                results: dict[str, ArmResult] = dict(zip(tasks, done))
+                if crawler is not None:
+                    results["crawl4ai"] = await timed(arm_crawl4ai, crawler, url)
+                for arm, note in skipped.items():
+                    results[arm] = ArmResult(arm, skipped=note)
+                rows.append({
+                    "url": url, "category": category, "set": corpus,
+                    "arms": {arm: asdict(results[arm]) for arm in analyze.ARMS if arm in results},
+                })
+                print("      " + "  ".join(
+                    f"{arm}=" + ("skip" if r.skipped else "ERR" if r.error and not r.ok else
+                                 "SILENT" if r.silent_block else "labelled" if r.labelled else
+                                 f"q{r.quality:.2f}" if r.quality is not None else "?")
+                    for arm, r in results.items()
+                ), flush=True)
+    finally:
+        if crawler is not None:
             await crawler.close()
-    return results
+    return rows, skipped
 
 
-def outcome(r: UrlResult) -> str:
-    """Enconvert outcome for one URL: clean | flagged | error.
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("urls", nargs="?", default="urls.txt")
+    parser.add_argument("--corpus", choices=("legacy", "v2"), default="v2",
+                        help="legacy = the original 50 URLs only; v2 = all")
+    parser.add_argument("--arms", default=",".join(analyze.ARMS),
+                        help="comma-separated subset of " + ",".join(analyze.ARMS))
+    parser.add_argument("--limit", type=int, default=0, help="first N URLs only (smoke runs)")
+    parser.add_argument("--region", default=os.getenv("BENCH_REGION", "local"),
+                        help="egress label recorded in meta and used by analyze.py")
+    parser.add_argument("--out", default="results.json")
+    args = parser.parse_args()
 
-    - error:   the render produced no HTML (surfaced loudly to the caller).
-    - flagged: the render is blocked or sub-floor (is_blocked OR q < 0.40) —
-               surfaced as low quality; never returned as clean content.
-    - clean:   a usable render (is_blocked == False AND q >= 0.40).
-    """
-    if r.enconvert_error is not None:
-        return "error"
-    if r.enconvert_flagged:
-        return "flagged"
-    return "clean"
-
-
-def summarize(results: list[UrlResult]) -> dict[str, Any]:
-    n = len(results)
-    naive_fail = [r for r in results if r.naive_silent_fail]
-    naive_error = [r for r in results if r.naive_error is not None]
-    enc_clean = [r for r in results if outcome(r) == "clean"]
-    enc_flagged = [r for r in results if outcome(r) == "flagged"]
-    enc_error = [r for r in results if outcome(r) == "error"]
-    # Recovery: of the pages a naive fetch silently failed on, how many did
-    # Enconvert render into clean, usable content?
-    recovered = [r for r in naive_fail if outcome(r) == "clean"]
-
-    def pct(x: int, d: int = n) -> float:
-        return round(100.0 * x / d, 1) if d else 0.0
-
-    return {
-        "n": n,
-        "naive_silent_fail_count": len(naive_fail),
-        "naive_silent_fail_pct": pct(len(naive_fail)),
-        "naive_hard_error_count": len(naive_error),
-        "enconvert_clean_count": len(enc_clean),
-        "enconvert_clean_pct": pct(len(enc_clean)),
-        "enconvert_flagged_count": len(enc_flagged),
-        "enconvert_flagged_pct": pct(len(enc_flagged)),
-        "enconvert_render_error_count": len(enc_error),
-        # Enconvert never returns a block page as content: every non-clean
-        # outcome is either flagged or a surfaced error.
-        "enconvert_silent_fail_count": 0,
-        "recovery": {
-            "naive_silent_fail_n": len(naive_fail),
-            "enconvert_rendered_clean": len(recovered),
-            "recovery_pct": pct(len(recovered), len(naive_fail)),
-        },
-    }
-
-
-def write_outputs(results: list[UrlResult], summary: dict[str, Any], meta: dict[str, Any]) -> None:
-    payload = {
-        "meta": meta,
-        "summary": summary,
-        "results": [asdict(r) for r in results],
-    }
-    Path("results.json").write_text(json.dumps(payload, indent=2))
-
-    rec = summary["recovery"]
-    lines = ["# Benchmark results", ""]
-    lines.append(f"- Generated: {meta.get('generated_utc', 'n/a')}")
-    lines.append(f"- URLs tested (N): **{summary['n']}**")
-    lines.append(
-        f"- **Naive fetch** silently returned a block page as content: "
-        f"**{summary['naive_silent_fail_pct']}%** "
-        f"({summary['naive_silent_fail_count']}/{summary['n']}) "
-        f"(+{summary['naive_hard_error_count']} loud connection errors)"
-    )
-    lines.append(
-        f"- **Enconvert recovery** — of those silent failures, rendered clean "
-        f"usable content: **{rec['recovery_pct']}%** "
-        f"({rec['enconvert_rendered_clean']}/{rec['naive_silent_fail_n']})"
-    )
-    lines.append(
-        f"- **Enconvert** across all {summary['n']}: "
-        f"clean {summary['enconvert_clean_count']} "
-        f"({summary['enconvert_clean_pct']}%), "
-        f"flagged (is_blocked or q<0.40) {summary['enconvert_flagged_count']} "
-        f"({summary['enconvert_flagged_pct']}%), "
-        f"render errors {summary['enconvert_render_error_count']}, "
-        f"**silently returned a block page: {summary['enconvert_silent_fail_count']}**"
-    )
-    lines.append("")
-    lines.append(
-        "| # | URL | Category | Naive silent-fail (why) | "
-        "Enconvert q | is_blocked | Outcome |"
-    )
-    lines.append(
-        "|---|-----|----------|-------------------------|"
-        "-------------|------------|---------|"
-    )
-    for i, r in enumerate(results, 1):
-        why = ",".join(r.naive_fail_reasons) if r.naive_silent_fail else (
-            "conn-error" if r.naive_error else "ok")
-        q = "err" if r.enconvert_quality is None else f"{r.enconvert_quality:.2f}"
-        blk = "" if r.enconvert_is_blocked is None else (
-            "yes" if r.enconvert_is_blocked else "no")
-        lines.append(
-            f"| {i} | {r.url} | {r.category.split('#')[0].strip()} | "
-            f"{'yes: ' + why if r.naive_silent_fail else why} | {q} | {blk} | "
-            f"{outcome(r)} |"
-        )
-    Path("results.md").write_text("\n".join(lines) + "\n")
-
-
-async def main() -> None:
-    urls_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("urls.txt")
-    urls = load_urls(urls_path)
+    arms = [a for a in args.arms.split(",") if a]
+    unknown = set(arms) - set(analyze.ARMS)
+    if unknown:
+        sys.exit(f"unknown arms: {', '.join(sorted(unknown))}")
+    urls = load_urls(Path(args.urls))
+    if args.corpus == "legacy":
+        urls = [u for u in urls if u[2] == "legacy"]
+    if args.limit:
+        urls = urls[: args.limit]
     if not urls:
-        print(f"No URLs found in {urls_path}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(f"No URLs selected from {args.urls}")
 
     started = time.time()
-    results = await run(urls)
-    summary = summarize(results)
-    meta = {
-        "harness": "perceive_benchmark.py",
-        "quality_floor": QUALITY_FLOOR,
-        "render_user_agent": V1_USER_AGENT,
-        "elapsed_seconds": round(time.time() - started, 1),
-        "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    }
-    write_outputs(results, summary, meta)
-
-    rec = summary["recovery"]
-    print("\n================ SUMMARY ================")
-    print(json.dumps(summary, indent=2))
-    print("\nHeadline numbers for the MCP page (McpBenchmark.tsx BENCHMARK):")
-    print(f"  urlsTested                 = {summary['n']}")
-    print(f"  naiveSilentFailPct         = {summary['naive_silent_fail_pct']}")
-    print(f"  enconvertRecoveredPct      = {rec['recovery_pct']}   "
-          f"({rec['enconvert_rendered_clean']}/{rec['naive_silent_fail_n']} "
-          f"naive silent-fails rendered clean)")
-    print(f"  enconvert clean/flagged/err = "
-          f"{summary['enconvert_clean_count']}/"
-          f"{summary['enconvert_flagged_count']}/"
-          f"{summary['enconvert_render_error_count']}   "
-          f"silent-fails: {summary['enconvert_silent_fail_count']}")
-    print("Wrote results.json and results.md")
+    rows, skipped = asyncio.run(run(urls, arms))
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps({
+        "meta": {
+            "schema": SCHEMA_VERSION,
+            "harness": "perceive_benchmark.py",
+            "region": args.region,
+            "corpus": args.corpus,
+            "arms_requested": arms,
+            "arms_skipped": skipped,
+            "quality_floor": QUALITY_FLOOR,
+            "scorer_sha256": scorer_sha256(),
+            "elapsed_seconds": round(time.time() - started, 1),
+            "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        },
+        "rows": rows,
+    }, indent=1))
+    analyze.main([str(out)])  # folds the summary into the JSON and writes ./results.md
+    summary = json.loads(out.read_text())["summary"]
+    print("\n================ HEADLINES ================")
+    for label, s in summary.items():
+        for arm in ("naive", "enconvert"):
+            st = s["arms"].get(arm, {})
+            if st.get("skipped"):
+                print(f"  {label:<12} {arm:<10} skipped: {st['skipped']}")
+            else:
+                print(f"  {label:<12} {arm:<10} silent block pages {st['silent_block']}/{st['attempted']} "
+                      f"({st['silent_block_pct']}%)  clean {st['clean']}  labelled {st['labelled']}")
+    print(f"Wrote {out}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

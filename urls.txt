@@ -1,72 +1,233 @@
-# Enconvert silent-failure benchmark — 50 fixed public URLs.
-# Format: URL<whitespace>category   (# = inline comment / vendor note)
-# Categories: bot-gated | paywalled | js-heavy
+# EnConvert silent-failure benchmark corpus: 200 fixed public URLs.
+# Format: URL<ws>category<ws>set   # inline note (vendor attribution / why)
+# Categories: bot-gated | paywalled | js-heavy | control
+# Sets:       legacy = the original 50 URLs of the 2026-07-07 v1 run
+#             v2     = added for the 200-URL v2 corpus
 #
-# All URLs are public (no login required) and were selected as a
-# representative "hostile" set: sites behind bot-management (Cloudflare,
-# Akamai, DataDome, PerimeterX/HUMAN), paywalls, or client-side rendering.
-# Vendor attribution reflects public scraping-vendor writeups; actual
-# per-run behavior varies with IP reputation and geo (that is the point —
-# run it yourself and see).
+# Every URL is a public homepage or public article/section page. No login-
+# required pages, no personal pages. Categories describe the EXPECTED barrier
+# from public bot-management footprints and vendor writeups; the per-category
+# table in results.md shows how each category actually behaved on a run.
+# Bot-management verdicts move with IP reputation and geography.
 
-# ---------------------------------------------------------------------------
-# BOT-GATED (18) — Cloudflare / Akamai / DataDome / PerimeterX-HUMAN / Imperva
-# ---------------------------------------------------------------------------
-https://www.g2.com/               bot-gated   # Cloudflare challenge
-https://www.indeed.com/           bot-gated   # Cloudflare
-https://www.glassdoor.com/        bot-gated   # Cloudflare
-https://www.yelp.com/             bot-gated   # DataDome (Server: DataDome)
-https://www.tripadvisor.com/      bot-gated   # DataDome
-https://www.etsy.com/             bot-gated   # DataDome
-https://seatgeek.com/             bot-gated   # DataDome
-https://www.leboncoin.fr/         bot-gated   # DataDome (named customer)
-https://www.coinbase.com/         bot-gated   # Cloudflare (crypto exchange)
-https://kick.com/                 bot-gated   # Cloudflare (streaming)
-https://www.zillow.com/           bot-gated   # PerimeterX / HUMAN
-https://stockx.com/               bot-gated   # PerimeterX / HUMAN
-https://www.nike.com/             bot-gated   # Akamai ("Access Denied")
-https://www.ticketmaster.com/     bot-gated   # Cloudflare interstitial
-https://www.crunchbase.com/       bot-gated   # Cloudflare / PerimeterX
-https://www.walmart.com/          bot-gated   # PerimeterX / HUMAN
-https://www.similarweb.com/       bot-gated   # Cloudflare
-https://www.booking.com/          bot-gated   # Akamai / custom challenge
+# ===========================================================================
+# LEGACY SET (50): reproduces the v1 corpus exactly
+# ===========================================================================
 
-# ---------------------------------------------------------------------------
-# PAYWALLED (15) — hard paywalls gate a naive fetch; metered often do not
-# ---------------------------------------------------------------------------
-https://www.wsj.com/              paywalled   # HARD (Dow Jones, 401 gate)
-https://www.barrons.com/          paywalled   # HARD (Dow Jones)
-https://www.ft.com/               paywalled   # HARD + Cloudflare
-https://www.economist.com/        paywalled   # HARD + Cloudflare
-https://www.bloomberg.com/        paywalled   # metered-aggressive + PerimeterX
-https://www.theinformation.com/   paywalled   # HARD (subscriber-only)
-https://www.washingtonpost.com/   paywalled   # metered + bot edge
-https://www.thetimes.com/         paywalled   # HARD / registration wall (UK)
-https://seekingalpha.com/         paywalled   # register + metered + PerimeterX
-https://hbr.org/                  paywalled   # metered -> hard
-https://www.newyorker.com/        paywalled   # metered (Conde Nast)
-https://www.wired.com/            paywalled   # metered (Conde Nast)
-https://www.theatlantic.com/      paywalled   # metered -> hard
-https://www.businessinsider.com/  paywalled   # freemium / metered
-https://www.nytimes.com/          paywalled   # metered / dynamic
+# --- bot-gated (18) ---------------------------------------------------------
+https://www.g2.com/               bot-gated   legacy   # Cloudflare challenge
+https://www.indeed.com/           bot-gated   legacy   # Cloudflare
+https://www.glassdoor.com/        bot-gated   legacy   # Cloudflare
+https://www.yelp.com/             bot-gated   legacy   # DataDome
+https://www.tripadvisor.com/      bot-gated   legacy   # DataDome
+https://www.etsy.com/             bot-gated   legacy   # DataDome
+https://seatgeek.com/             bot-gated   legacy   # DataDome
+https://www.leboncoin.fr/         bot-gated   legacy   # DataDome (named customer)
+https://www.coinbase.com/         bot-gated   legacy   # Cloudflare
+https://kick.com/                 bot-gated   legacy   # Cloudflare
+https://www.zillow.com/           bot-gated   legacy   # PerimeterX / HUMAN
+https://stockx.com/               bot-gated   legacy   # PerimeterX / HUMAN
+https://www.nike.com/             bot-gated   legacy   # Akamai ("Access Denied")
+https://www.ticketmaster.com/     bot-gated   legacy   # Cloudflare interstitial
+https://www.crunchbase.com/       bot-gated   legacy   # Cloudflare / PerimeterX
+https://www.walmart.com/          bot-gated   legacy   # PerimeterX / HUMAN
+https://www.similarweb.com/       bot-gated   legacy   # Cloudflare
+https://www.booking.com/          bot-gated   legacy   # Akamai / custom challenge
 
-# ---------------------------------------------------------------------------
-# JS-HEAVY SPA (17) — near-empty HTML shell to a naive fetch; JS builds the DOM
-# ---------------------------------------------------------------------------
-https://web.telegram.org/         js-heavy    # ~1.5KB shell
-https://www.messenger.com/        js-heavy    # ~1.1KB shell
-https://app.diagrams.net/         js-heavy    # draw.io, ~2.7KB shell
-https://app.element.io/           js-heavy    # Matrix client, ~4.7KB shell
-https://app.aave.com/             js-heavy    # DeFi dashboard, empty #root
-https://open.spotify.com/         js-heavy    # web player shell
-https://excalidraw.com/           js-heavy    # whiteboard, empty #root
-https://pancakeswap.finance/      js-heavy    # DeFi app shell
-https://app.uniswap.org/          js-heavy    # swap app, empty #root
-https://www.photopea.com/         js-heavy    # image editor (canvas) shell
-https://jup.ag/                   js-heavy    # Solana swap, needs-JS
-https://x.com/                    js-heavy    # social feed, JS shell + edge
-https://dexscreener.com/          js-heavy    # crypto dashboard (React) + CF
-https://defillama.com/            js-heavy    # DeFi dashboard (Next.js) + CF
-https://tldraw.com/               js-heavy    # whiteboard SPA shell
-https://coinmarketcap.com/        js-heavy    # JS-heavy + Cloudflare
-https://www.coingecko.com/        js-heavy    # JS-heavy dashboard
+# --- paywalled (15) ---------------------------------------------------------
+https://www.wsj.com/              paywalled   legacy   # HARD (Dow Jones, 401 gate)
+https://www.barrons.com/          paywalled   legacy   # HARD (Dow Jones)
+https://www.ft.com/               paywalled   legacy   # HARD + Cloudflare
+https://www.economist.com/        paywalled   legacy   # HARD + Cloudflare
+https://www.bloomberg.com/        paywalled   legacy   # metered-aggressive + PerimeterX
+https://www.theinformation.com/   paywalled   legacy   # HARD (subscriber-only)
+https://www.washingtonpost.com/   paywalled   legacy   # metered + bot edge
+https://www.thetimes.com/         paywalled   legacy   # HARD / registration wall (UK)
+https://seekingalpha.com/         paywalled   legacy   # register + metered + PerimeterX
+https://hbr.org/                  paywalled   legacy   # metered -> hard
+https://www.newyorker.com/        paywalled   legacy   # metered (Conde Nast)
+https://www.wired.com/            paywalled   legacy   # metered (Conde Nast)
+https://www.theatlantic.com/      paywalled   legacy   # metered -> hard
+https://www.businessinsider.com/  paywalled   legacy   # freemium / metered
+https://www.nytimes.com/          paywalled   legacy   # metered / dynamic
+
+# --- js-heavy (17) ----------------------------------------------------------
+https://web.telegram.org/         js-heavy    legacy   # ~1.5KB shell
+https://www.messenger.com/        js-heavy    legacy   # ~1.1KB shell
+https://app.diagrams.net/         js-heavy    legacy   # draw.io, ~2.7KB shell
+https://app.element.io/           js-heavy    legacy   # Matrix client, ~4.7KB shell
+https://app.aave.com/             js-heavy    legacy   # DeFi dashboard, empty #root
+https://open.spotify.com/         js-heavy    legacy   # web player shell
+https://excalidraw.com/           js-heavy    legacy   # whiteboard, empty #root
+https://pancakeswap.finance/      js-heavy    legacy   # DeFi app shell
+https://app.uniswap.org/          js-heavy    legacy   # swap app, empty #root
+https://www.photopea.com/         js-heavy    legacy   # image editor (canvas) shell
+https://jup.ag/                   js-heavy    legacy   # Solana swap, needs JS
+https://x.com/                    js-heavy    legacy   # social feed, JS shell + edge
+https://dexscreener.com/          js-heavy    legacy   # React dashboard + Cloudflare
+https://defillama.com/            js-heavy    legacy   # Next.js dashboard + Cloudflare
+https://tldraw.com/               js-heavy    legacy   # whiteboard SPA shell
+https://coinmarketcap.com/        js-heavy    legacy   # JS-heavy + Cloudflare
+https://www.coingecko.com/        js-heavy    legacy   # JS-heavy dashboard
+
+# ===========================================================================
+# V2 ADDITIONS (150)
+# ===========================================================================
+
+# --- bot-gated (42): Cloudflare / Akamai / DataDome / HUMAN / Imperva / Kasada
+https://www.reddit.com/           bot-gated   v2       # datacenter IPs get 403/429 block page
+https://www.amazon.com/           bot-gated   v2       # "Robot Check" CAPTCHA interstitial
+https://www.ebay.com/             bot-gated   v2       # Akamai
+https://www.bestbuy.com/          bot-gated   v2       # Akamai ("Access Denied")
+https://www.target.com/           bot-gated   v2       # Akamai + Shape
+https://www.homedepot.com/        bot-gated   v2       # Akamai
+https://www.lowes.com/            bot-gated   v2       # Akamai
+https://www.costco.com/           bot-gated   v2       # Akamai
+https://www.wayfair.com/          bot-gated   v2       # PerimeterX / HUMAN
+https://www.sephora.com/          bot-gated   v2       # Akamai
+https://www.adidas.com/us         bot-gated   v2       # Akamai
+https://www.footlocker.com/       bot-gated   v2       # PerimeterX / HUMAN
+https://www.ikea.com/us/en/       bot-gated   v2       # Akamai
+https://www.realtor.com/          bot-gated   v2       # PerimeterX / HUMAN
+https://www.redfin.com/           bot-gated   v2       # PerimeterX / HUMAN
+https://www.apartments.com/       bot-gated   v2       # Imperva
+https://www.rightmove.co.uk/      bot-gated   v2       # Akamai
+https://www.idealista.com/        bot-gated   v2       # DataDome
+https://www.seloger.com/          bot-gated   v2       # DataDome
+https://www.vinted.com/           bot-gated   v2       # DataDome
+https://www.expedia.com/          bot-gated   v2       # Akamai
+https://www.kayak.com/            bot-gated   v2       # PerimeterX / HUMAN
+https://www.airbnb.com/           bot-gated   v2       # Akamai + custom
+https://www.united.com/           bot-gated   v2       # Akamai
+https://www.delta.com/            bot-gated   v2       # Akamai
+https://www.ryanair.com/          bot-gated   v2       # Akamai / custom challenge
+https://www.stubhub.com/          bot-gated   v2       # PerimeterX / HUMAN
+https://www.eventbrite.com/       bot-gated   v2       # Cloudflare
+https://www.upwork.com/           bot-gated   v2       # Cloudflare challenge
+https://www.fiverr.com/           bot-gated   v2       # PerimeterX / HUMAN
+https://wellfound.com/            bot-gated   v2       # Cloudflare challenge
+https://www.ziprecruiter.com/     bot-gated   v2       # Cloudflare
+https://www.zoominfo.com/         bot-gated   v2       # Cloudflare
+https://www.investing.com/        bot-gated   v2       # Cloudflare + Imperva
+https://www.nasdaq.com/           bot-gated   v2       # Akamai
+https://www.tradingview.com/      bot-gated   v2       # Cloudflare
+https://etherscan.io/             bot-gated   v2       # Cloudflare challenge
+https://opensea.io/               bot-gated   v2       # Cloudflare
+https://www.udemy.com/            bot-gated   v2       # Cloudflare challenge
+https://www.craigslist.org/       bot-gated   v2       # blocks datacenter ranges with 403
+https://www.flipkart.com/         bot-gated   v2       # Akamai (India)
+https://www.makemytrip.com/       bot-gated   v2       # Akamai (India)
+
+# --- paywalled (35): hard walls, registration walls, metered with bot edge
+https://www.telegraph.co.uk/      paywalled   v2       # metered -> hard (UK)
+https://www.latimes.com/          paywalled   v2       # metered
+https://www.bostonglobe.com/      paywalled   v2       # hard
+https://www.chicagotribune.com/   paywalled   v2       # metered
+https://www.sfchronicle.com/      paywalled   v2       # hard
+https://www.seattletimes.com/     paywalled   v2       # metered
+https://www.dallasnews.com/       paywalled   v2       # metered
+https://www.startribune.com/      paywalled   v2       # metered
+https://www.inquirer.com/         paywalled   v2       # metered
+https://www.reuters.com/          paywalled   v2       # registration wall + DataDome edge
+https://www.forbes.com/           paywalled   v2       # metered + bot edge
+https://fortune.com/              paywalled   v2       # metered
+https://www.vanityfair.com/       paywalled   v2       # metered (Conde Nast)
+https://www.vogue.com/            paywalled   v2       # metered (Conde Nast)
+https://medium.com/               paywalled   v2       # metered member wall
+https://www.nature.com/           paywalled   v2       # article paywall (Springer Nature)
+https://www.science.org/          paywalled   v2       # article paywall (AAAS)
+https://www.sciencedirect.com/    paywalled   v2       # Elsevier + Cloudflare
+https://link.springer.com/        paywalled   v2       # Springer article paywall
+https://onlinelibrary.wiley.com/  paywalled   v2       # Wiley + Cloudflare
+https://www.jstor.org/            paywalled   v2       # registration / institutional
+https://www.nejm.org/             paywalled   v2       # hard + Cloudflare
+https://www.thelancet.com/        paywalled   v2       # Elsevier
+https://www.statnews.com/         paywalled   v2       # STAT+ hard
+https://www.politico.com/         paywalled   v2       # Pro paywall + bot edge
+https://www.foreignaffairs.com/   paywalled   v2       # metered -> hard
+https://foreignpolicy.com/        paywalled   v2       # metered -> hard
+https://www.lemonde.fr/           paywalled   v2       # metered (FR)
+https://www.lesechos.fr/          paywalled   v2       # hard (FR)
+https://www.faz.net/              paywalled   v2       # FAZ+ (DE)
+https://www.handelsblatt.com/     paywalled   v2       # hard (DE)
+https://www.nzz.ch/               paywalled   v2       # metered (CH)
+https://www.globeandmail.com/     paywalled   v2       # metered (CA)
+https://www.afr.com/              paywalled   v2       # hard (AU)
+https://www.livemint.com/         paywalled   v2       # metered (India)
+
+# --- js-heavy (30): empty or near-empty HTML shell; JavaScript builds the DOM
+https://web.whatsapp.com/         js-heavy    v2       # QR landing, JS shell, no personal data
+https://vscode.dev/               js-heavy    v2       # editor shell
+https://codesandbox.io/           js-heavy    v2       # SPA + Cloudflare
+https://stackblitz.com/           js-heavy    v2       # SPA
+https://codepen.io/               js-heavy    v2       # SPA + Cloudflare
+https://godbolt.org/              js-heavy    v2       # Compiler Explorer, JS shell
+https://regex101.com/             js-heavy    v2       # SPA
+https://squoosh.app/              js-heavy    v2       # image compressor, empty shell
+https://www.desmos.com/calculator js-heavy    v2       # calculator canvas
+https://www.wolframalpha.com/     js-heavy    v2       # SPA
+https://fonts.google.com/         js-heavy    v2       # Angular shell
+https://crates.io/                js-heavy    v2       # Ember SPA shell
+https://hub.docker.com/           js-heavy    v2       # SPA shell
+https://dune.com/                 js-heavy    v2       # Next.js dashboard shell
+https://debank.com/               js-heavy    v2       # DeFi dashboard shell
+https://curve.fi/                 js-heavy    v2       # DeFi app shell
+https://app.1inch.io/             js-heavy    v2       # swap app shell
+https://raydium.io/swap/          js-heavy    v2       # Solana swap shell
+https://stake.lido.fi/            js-heavy    v2       # staking app shell
+https://app.gmx.io/               js-heavy    v2       # perps app shell
+https://magiceden.io/             js-heavy    v2       # NFT marketplace SPA + Cloudflare
+https://solscan.io/               js-heavy    v2       # explorer SPA + Cloudflare
+https://mempool.space/            js-heavy    v2       # Angular explorer shell
+https://www.flightradar24.com/    js-heavy    v2       # map SPA + Cloudflare
+https://www.marinetraffic.com/    js-heavy    v2       # map SPA
+https://www.windy.com/            js-heavy    v2       # weather map shell
+https://earth.nullschool.net/     js-heavy    v2       # weather globe, empty shell
+https://mastodon.social/          js-heavy    v2       # React shell
+https://bsky.app/                 js-heavy    v2       # React Native Web shell
+https://duckduckgo.com/           js-heavy    v2       # homepage builds in JS
+
+# --- control (43): plain static or server-rendered public pages every arm should read
+https://example.com/                                            control   v2  # IANA reserved domain
+https://www.iana.org/                                           control   v2  # static
+https://www.wikipedia.org/                                      control   v2  # static portal
+https://en.wikipedia.org/wiki/Web_scraping                      control   v2  # public article page
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403    control   v2  # public docs page
+https://docs.python.org/3/library/asyncio.html                  control   v2  # public docs page
+https://www.python.org/                                         control   v2  # static
+https://www.gnu.org/                                            control   v2  # static
+https://www.kernel.org/                                         control   v2  # static
+https://www.debian.org/                                         control   v2  # static
+https://www.apache.org/                                         control   v2  # static
+https://nginx.org/en/                                           control   v2  # static
+https://www.postgresql.org/docs/current/index.html              control   v2  # public docs page
+https://sqlite.org/index.html                                   control   v2  # static
+https://www.rust-lang.org/                                      control   v2  # static
+https://go.dev/                                                 control   v2  # static
+https://nodejs.org/en                                           control   v2  # server-rendered
+https://www.php.net/                                            control   v2  # server-rendered
+https://www.w3.org/                                             control   v2  # static
+https://datatracker.ietf.org/doc/html/rfc9110                   control   v2  # public spec page
+https://www.rfc-editor.org/rfc/rfc7231                          control   v2  # public spec page
+https://arxiv.org/abs/1706.03762                                control   v2  # public abstract page
+https://archive.org/                                            control   v2  # server-rendered
+https://www.loc.gov/                                            control   v2  # government
+https://www.nasa.gov/                                           control   v2  # government
+https://www.nist.gov/                                           control   v2  # government
+https://www.gov.uk/                                             control   v2  # government
+https://europa.eu/                                              control   v2  # government
+https://www.who.int/                                            control   v2  # intergovernmental
+https://www.bbc.com/news                                        control   v2  # free news, server-rendered
+https://www.theguardian.com/international                       control   v2  # free news, server-rendered
+https://apnews.com/                                             control   v2  # free news
+https://www.npr.org/                                            control   v2  # free news
+https://news.ycombinator.com/                                   control   v2  # static HTML
+https://github.com/unclecode/crawl4ai                           control   v2  # public repo page
+https://pypi.org/project/httpx/                                 control   v2  # public package page
+https://react.dev/                                              control   v2  # static docs site
+https://fastapi.tiangolo.com/                                   control   v2  # static docs site
+https://docs.djangoproject.com/en/stable/                       control   v2  # public docs page
+https://kubernetes.io/docs/home/                                control   v2  # static docs site
+https://www.britannica.com/                                     control   v2  # server-rendered
+https://www.merriam-webster.com/                                control   v2  # server-rendered
+https://ocw.mit.edu/                                            control   v2  # static

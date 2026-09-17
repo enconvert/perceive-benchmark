@@ -13,7 +13,10 @@ uses three ways (plan F.7 "Why"):
 * ``/v2/watch`` (Task I.3) will short-circuit a diff when the snapshot
   scored as blocked.
 
-The eight deductions are exactly the section-4.2 list. Score is
+The eight deductions are exactly the section-4.2 list; the 2026-08-06
+QA root-cause fixes add ``http_error`` (D2 — main-document status >=
+400), ``soft_404`` (D3 — a page that declares itself a 404 under an
+HTTP 200), and rework ``login_wall`` (D5). Score is
 ``1.0 - sum(deductions)`` clamped to [0.0, 1.0].
 
 Hardening (F.7.1): two classes of failed render used to slip past the
@@ -59,11 +62,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from typing import Any, Optional
-from urllib.parse import urlsplit
 
 from bs4 import BeautifulSoup
 
-from instrumentation import PageInstrumentation
+from services.page_quality.instrumentation import PageInstrumentation
+from utils.url_registrable import registered_domain_from_url
 
 # --- Section 4.2 deduction table -------------------------------------------
 
@@ -109,13 +112,71 @@ _BOT_DETECTION_STRONG_MAX_WORDS = 200
 
 _LOGIN_MARKERS: tuple[str, ...] = (
     "sign in",
+    "sign up",
+    "sign-in",
+    "sign-up",
+    "signin",
+    "signup",
     "log in",
+    "log-in",
+    "login",
     "create account",
+    "create an account",
     "authentication required",
 )
 _LOGIN_HIT_THRESHOLD = 3
 _LOGIN_MAX_WORDS = 200
-_LOGIN_DEDUCTION = 0.4
+# Near-empty gate pages (ETL-004: OpenAI's is 75 words and says only
+# "Sign up or login…") never reach 3 marker hits; two hits on a page
+# this thin is already unambiguous.
+_LOGIN_THIN_HIT_THRESHOLD = 2
+_LOGIN_THIN_MAX_WORDS = 120
+# Structural signal: a visible password input is a login form regardless
+# of the page's vocabulary. Word ceiling keeps an article that embeds a
+# demo form from firing.
+_LOGIN_PASSWORD_MAX_WORDS = 350
+# 0.65 lands the score at 0.35 — below the 0.40 floor. The original 0.4
+# left a detected login wall at 0.6, ABOVE the floor, so downstream
+# consumers ingested gate pages as usable content (QA report, fix D5).
+_LOGIN_DEDUCTION = 0.65
+
+# HTTP error status on the main document (QA report fix D2). 0.7 lands
+# the score at 0.3, decisively below the 0.40 floor — an error page is a
+# failed render no matter how much nav chrome it carries. ETL-011: a
+# Mintlify 404 with a full site shell scored 1.0 before this deduction
+# existed, because no other check reads the status code.
+_HTTP_ERROR_DEDUCTION = 0.7
+
+# Soft 404 (QA report fix D3): the page SAYS it is a 404 but the server
+# answered 200 (common on SPA docs platforms). The title/h1 must BE an
+# error phrase (anchored), never merely contain one — an article titled
+# "Understanding the 404 not found error" must not fire. Platform
+# defaults covered: bare "404", "404 Not Found", Next.js's "404: This
+# page could not be found", Mintlify/Docusaurus "Page Not Found" (with
+# an optional "| Site" suffix or prefix). A distinct-word ceiling is the
+# second guard: error pages repeat a small vocabulary (nav labels +
+# font-probe filler), real articles carry hundreds of distinct words.
+_SOFT_404_PHRASES: tuple[re.Pattern[str], ...] = (
+    re.compile(r"^(?:error\s*)?404(?:\s*(?:error|not\s+found))?\.?$"),
+    re.compile(r"^404\s*[|:\-–—].*$"),
+    re.compile(r"^.*[|:\-–—]\s*404$"),
+    re.compile(r"^page not found(?:\s*[|:\-–—].*)?$"),
+    re.compile(r"^(?:oops[!,.]?\s*)?(?:this\s+)?page (?:could not be found|"
+               r"doesn'?t exist|no longer exists|was not found)\.?$"),
+    re.compile(r"^(?:sorry[!,.]?\s*)?we couldn'?t find (?:that|this|the) "
+               r"page\.?$"),
+    re.compile(r"^nothing (?:was )?found here\.?$"),
+)
+_SOFT_404_MAX_DISTINCT_WORDS = 250
+_SOFT_404_DEDUCTION = 0.65
+
+
+def _is_soft_404_phrase(text: str) -> bool:
+    """True when ``text`` (a title or h1, lowercased) IS an error phrase."""
+    stripped = text.strip()
+    if not stripped or len(stripped) > 80:
+        return False
+    return any(pattern.match(stripped) for pattern in _SOFT_404_PHRASES)
 
 # A render with fewer than 20 visible words is not thin content — it is a
 # failed render (an empty SPA shell, a title-only stub, a blank challenge
@@ -147,11 +208,26 @@ _SLOW_SOFT_DEDUCTION = 0.05
 # Tags whose text content is invisible to a human looking at the render.
 _INVISIBLE_TAGS = ("script", "style", "noscript", "template")
 
-# Second-level labels under which a two-label suffix is NOT the
-# registered domain (example.co.uk, example.ac.jp, ...). A deliberate
-# approximation of the public-suffix list: good enough to keep
-# www/accounts/consent subdomain hops from looking like redirects.
-_SHARED_SLDS = frozenset({"ac", "co", "com", "edu", "gov", "net", "org"})
+# Un-hydrated SPA shell: a framework mount point that JavaScript was supposed
+# to fill and did not. Deduction 4 alone misses this — it counts whole-page
+# visible words, so a shell wrapped in a static nav + footer clears the 100-word
+# floor and scores a clean 1.0. That matters most for the no-browser TLS rung,
+# which never executes JavaScript at all, but it is scored for every engine:
+# a Chromium render whose app failed to hydrate is equally a failed render.
+_MOUNT_SELECTORS = (
+    "#root, #app, #__next, #__nuxt, #___gatsby, [data-reactroot], app-root"
+)
+# Words inside the mount node below which it counts as unfilled (a spinner or
+# an "enable JavaScript" stub, not content).
+_MOUNT_EMPTY_WORDS = 20
+# Above this whole-page word count the page already carries real content, so an
+# empty mount node is a side widget rather than the app — do not fire. Keeps a
+# CMS page that happens to ship an empty `<div id="app">` off the escalation
+# path, which would otherwise cost the TLS rung its entire throughput win.
+_MOUNT_MAX_PAGE_WORDS = 500
+# Sized to land a shell at 0.30, clearly under the 0.40 ladder floor, matching
+# the hard empty-body deduction it generalizes.
+_MOUNT_DEDUCTION = 0.7
 
 
 @dataclass(frozen=True)
@@ -169,12 +245,34 @@ class RenderQuality:
     deductions: dict[str, float]
 
 
-def _visible_text(html: str) -> str:
-    """Text a human would see: everything outside script/style blocks."""
+def _clean_soup(html: str) -> BeautifulSoup:
+    """Parse ``html`` once with every human-invisible tag stripped."""
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup(_INVISIBLE_TAGS):
         tag.decompose()
-    return soup.get_text(" ")
+    return soup
+
+
+def _visible_text(html: str) -> str:
+    """Text a human would see: everything outside script/style blocks."""
+    return _clean_soup(html).get_text(" ")
+
+
+def _is_unhydrated_shell(soup: BeautifulSoup, word_count: int) -> bool:
+    """True when a framework mount node exists but was never filled.
+
+    ``soup`` must already have the invisible tags stripped, so a bare
+    ``<div id="root"></div>`` yields zero words even when the page ships a
+    megabyte of bundled JavaScript. A hydrated render has real content inside
+    that node, and a genuinely static site has no such node at all, so this
+    stays quiet in both of those cases.
+    """
+    if word_count >= _MOUNT_MAX_PAGE_WORDS:
+        return False
+    return any(
+        len(node.get_text(" ").split()) < _MOUNT_EMPTY_WORDS
+        for node in soup.select(_MOUNT_SELECTORS)
+    )
 
 
 def _distinct_marker_count(lowered_html: str, markers: tuple[str, ...]) -> int:
@@ -189,22 +287,12 @@ def _login_marker_hits(lowered_text: str) -> int:
 
 
 def _registered_domain(url: Optional[str]) -> Optional[str]:
-    """Approximate eTLD+1 so subdomain hops do not count as redirects."""
-    if not url:
-        return None
-    try:
-        host = urlsplit(url).hostname
-    except ValueError:
-        return None
-    if not host:
-        return None
-    host = host.lower().rstrip(".")
-    parts = host.split(".")
-    if len(parts) >= 3 and parts[-2] in _SHARED_SLDS and len(parts[-1]) <= 3:
-        return ".".join(parts[-3:])
-    if len(parts) >= 2:
-        return ".".join(parts[-2:])
-    return host
+    """Approximate eTLD+1 so subdomain hops do not count as redirects.
+
+    Delegates to the shared ``utils.url_registrable`` helper — the single
+    source of truth now also used by /v2/discover apex probing.
+    """
+    return registered_domain_from_url(url)
 
 
 def score(
@@ -230,7 +318,8 @@ def score(
     del structured  # Reserved for scorer v2 (plan section 7.4).
 
     lowered_html = (html or "").lower()
-    visible = _visible_text(html or "")
+    soup = _clean_soup(html or "")  # parsed once, reused by deduction 9
+    visible = soup.get_text(" ")
     lowered_text = visible.lower()
     word_count = len(visible.split())
 
@@ -256,10 +345,21 @@ def score(
     if bot_markers >= _BOT_DETECTION_THRESHOLD or strong_block:
         deductions["bot_detection"] = _BOT_DETECTION_DEDUCTION
 
-    # 3. Login wall: repeated auth vocabulary on a near-empty page.
+    # 3. Login wall (D5): auth vocabulary on a thin page, OR a visible
+    # password input (structural — vocabulary-independent). The old
+    # single rule ("3 word-boundary hits, < 200 words") missed every
+    # real gate page tested: ETL-004's OpenAI wall says "Sign up or
+    # login" (75 words, 2 hits under the old marker list — zero hits
+    # before "login"/"sign up" were added).
+    login_hits = _login_marker_hits(lowered_text)
+    has_password_input = soup.find("input", attrs={"type": "password"}) is not None
     if (
-        _login_marker_hits(lowered_text) >= _LOGIN_HIT_THRESHOLD
-        and word_count < _LOGIN_MAX_WORDS
+        (login_hits >= _LOGIN_HIT_THRESHOLD and word_count < _LOGIN_MAX_WORDS)
+        or (
+            login_hits >= _LOGIN_THIN_HIT_THRESHOLD
+            and word_count < _LOGIN_THIN_MAX_WORDS
+        )
+        or (has_password_input and word_count < _LOGIN_PASSWORD_MAX_WORDS)
     ):
         deductions["login_wall"] = _LOGIN_DEDUCTION
 
@@ -268,6 +368,12 @@ def score(
         deductions["empty_body"] = _EMPTY_HARD_DEDUCTION
     elif word_count < _EMPTY_SOFT_WORDS:
         deductions["empty_body"] = _EMPTY_SOFT_DEDUCTION
+
+    # 4b. Un-hydrated SPA shell. Only checked once deduction 4's HARD floor did
+    # not already fire — under 20 words the render is condemned anyway, and
+    # stacking both would double-count one defect.
+    if word_count >= _EMPTY_HARD_WORDS and _is_unhydrated_shell(soup, word_count):
+        deductions["unhydrated_shell"] = _MOUNT_DEDUCTION
 
     # 5. JavaScript errors (Phase-0 console capture).
     if instrumentation.console_error_count > _JS_ERRORS_HARD:
@@ -296,6 +402,38 @@ def score(
         deductions["slow_render"] = _SLOW_HARD_DEDUCTION
     elif instrumentation.page_load_time_ms > _SLOW_SOFT_MS:
         deductions["slow_render"] = _SLOW_SOFT_DEDUCTION
+
+    # 9. HTTP error on the main document (D2). The status arrives on the
+    # instrumentation from whichever engine rendered the page; None
+    # (unobserved) fires nothing so legacy callers are unaffected.
+    http_status = instrumentation.http_status
+    if http_status is not None and http_status >= 400:
+        deductions["http_error"] = _HTTP_ERROR_DEDUCTION
+
+    # 10. Soft 404 (D3): the page declares itself a 404 while the server
+    # answered 200 (SPA docs platforms). Only fires when http_error did
+    # not — a hard 404 is already condemned — and only on pages with a
+    # small distinct-word vocabulary, so a real article quoting "page
+    # not found" stays clean. Distinct words, not raw words: ETL-011's
+    # error page pads hundreds of raw words of font-probe filler ("word
+    # word word…") but only ~150 distinct ones.
+    if "http_error" not in deductions:
+        title_text = ""
+        if soup.title is not None:
+            title_text = soup.title.get_text(" ", strip=True).lower()
+        first_h1 = soup.find("h1")
+        h1_text = (
+            first_h1.get_text(" ", strip=True).lower()
+            if first_h1 is not None
+            else ""
+        )
+        declares_404 = _is_soft_404_phrase(title_text) or _is_soft_404_phrase(
+            h1_text
+        )
+        if declares_404:
+            distinct_words = len(set(lowered_text.split()))
+            if distinct_words < _SOFT_404_MAX_DISTINCT_WORDS:
+                deductions["soft_404"] = _SOFT_404_DEDUCTION
 
     total = round(1.0 - sum(deductions.values()), 4)
     return RenderQuality(

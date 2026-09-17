@@ -2,7 +2,10 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.pytest_cache/
 .DS_Store
 test_urls.txt
 run_public.log
 parity_gateway.json
+# local harness output; committed runs live in results/<date>-<region>.json
+/results.json
